@@ -8,9 +8,10 @@
 
 void TF_WriteImpl(TinyFrame *tf, const uint8_t *buff, size_t len)
 {
-	assert(gex_serial_fd != 0); // TODO update after TF has instances
+    GexClient *gc = tf->userdata;
+	assert(gc->acm_fd != 0);
 
-	ssize_t rv = write(gex_serial_fd, buff, len);
+	ssize_t rv = write(gc->acm_fd, buff, len);
 	if (rv != len) {
 		fprintf(stderr, "ERROR %d in TF write: %s\n", errno, strerror(errno));
 	}

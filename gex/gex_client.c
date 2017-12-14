@@ -5,7 +5,6 @@
 #include <malloc.h>
 #include <assert.h>
 #include <unistd.h>
-#include <signal.h>
 #include  <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -14,88 +13,71 @@
 #include "gex_client.h"
 #include "serial.h"
 
-int gex_serial_fd = -1;
-
-/** ^C handler to close it gracefully */
-static void sigintHandler(int sig)
+TF_Result connectivityCheckCb(TinyFrame *tf, TF_Msg *msg)
 {
-	if (gex_serial_fd != -1) {
-		close(gex_serial_fd);
-	}
-	exit(0);
-}
-
-TF_Result connectivityCheckCb(TF_Msg *msg)
-{
-	GexClient *gc = msg->userdata;
-	gc->connected = true;
-	fprintf(stderr, "GEX connected! Version string: %.*s\n", msg->len, msg->data);
-
-	msg->userdata = NULL;
-	return TF_CLOSE;
+    GexClient *gex = tf->userdata;
+    gex->connected = true;
+    fprintf(stderr, "GEX connected! Version string: %.*s\n", msg->len, msg->data);
+    return TF_CLOSE;
 }
 
 GexClient *GEX_Init(const char *device, int timeout_ms)
 {
-	assert(device != NULL);
+    assert(device != NULL);
 
-	GexClient *gc = calloc(1, sizeof(GexClient));
-	assert(gc != NULL);
+    GexClient *gex = calloc(1, sizeof(GexClient));
+    assert(gex != NULL);
 
-	// Bind ^C handler for safe shutdown
-	signal(SIGINT, sigintHandler);
+    // Open the device
+    gex->acm_device = device;
+    gex->acm_fd = serial_open(device, false, (timeout_ms + 50) / 100);
+    if (gex->acm_fd == -1) {
+        free(gex);
+        return NULL;
+    }
 
-	// Open the device
-	gc->acm_device = device;
-	gc->acm_fd = serial_open(device, false, (timeout_ms+50)/100);
-	if (gc->acm_fd == -1) {
-		free(gc);
-		return NULL;
-	}
+    gex->tf = TF_Init(TF_MASTER);
+    gex->tf->userdata = gex;
 
-	gex_serial_fd = gc->acm_fd;
+    // Test connectivity
+    TF_Msg msg;
+    TF_ClearMsg(&msg);
+    msg.type = 0x01; // TODO use constant
+    TF_Query(gex->tf, &msg, connectivityCheckCb, 0);
+    GEX_Poll(gex);
 
-	// Test connectivity
-	TF_Msg msg;
-	TF_ClearMsg(&msg);
-	msg.type = 0x01; // TODO use constant
-	msg.userdata = gc;
-	TF_Query(&msg, connectivityCheckCb, 0);
-	GEX_Poll(gc);
+    if (!gex->connected) {
+        fprintf(stderr, "GEX doesn't respond to ping!\n");
+        GEX_DeInit(gex);
+        return NULL;
+    }
 
-	if (!gc->connected) {
-		fprintf(stderr, "GEX doesn't respond to ping!\n");
-		GEX_DeInit(gc);
-		return NULL;
-	}
+    // TODO load and store unit callsigns + names
 
-	// TODO load and store unit callsigns + names
-
-	return gc;
+    return gex;
 }
 
 
-void GEX_Poll(GexClient *gc)
+void GEX_Poll(GexClient *gex)
 {
-	static uint8_t pollbuffer[4096];
+    uint8_t pollbuffer[1024];
 
-	assert(gc != NULL);
+    assert(gex != NULL);
 
-	ssize_t len = read(gc->acm_fd, pollbuffer, 4096);
-	if (len < 0) {
-		fprintf(stderr, "ERROR %d in GEX Poll: %s\n", errno, strerror(errno));
-	} else {
-//		hexDump("Received", pollbuffer, (uint32_t) len);
-		TF_Accept(pollbuffer, (size_t) len);
-	}
+    ssize_t len = read(gex->acm_fd, pollbuffer, 1024);
+    if (len < 0) {
+        fprintf(stderr, "ERROR %d in GEX Poll: %s\n", errno, strerror(errno));
+    } else {
+        //hexDump("Received", pollbuffer, (uint32_t) len);
+        TF_Accept(gex->tf, pollbuffer, (size_t) len);
+    }
 }
 
 
 void GEX_DeInit(GexClient *gc)
 {
-	if (gc == NULL) return;
-
-	close(gc->acm_fd);
-	gex_serial_fd = -1;
-	free(gc);
+    if (gc == NULL) return;
+    close(gc->acm_fd);
+    TF_DeInit(gc->tf);
+    free(gc);
 }

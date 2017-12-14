@@ -11,7 +11,7 @@ set(SOURCE_FILES
         gex/gex_client.h
         gex/utils/hexdump.c
         gex/utils/hexdump.h
-        gex/protocol/TF_Integration.c
+        gex/TF_Integration.c
         gex/utils/payload_builder.c
         gex/utils/payload_builder.h
         gex/utils/payload_parser.c

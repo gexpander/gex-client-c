@@ -8,11 +8,13 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "TinyFrame.h"
 
 struct gex_client_ {
-	const char *acm_device;
-	int acm_fd;
-	bool connected;
+    TinyFrame *tf;
+    const char *acm_device;
+    int acm_fd;
+    bool connected;
 };
 
 typedef struct gex_client_ GexClient;
@@ -28,9 +30,9 @@ GexClient *GEX_Init(const char *device, int timeout_ms);
 
 /**
  * Poll for new messages
- * @param gc - client
+ * @param gex - client
  */
-void GEX_Poll(GexClient *gc);
+void GEX_Poll(GexClient *gex);
 
 /**
  * Safely release all resources used up by GEX_Init()
