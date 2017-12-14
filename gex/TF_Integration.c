@@ -6,6 +6,8 @@
 #include <assert.h>
 #include <errno.h>
 
+#include "gex_client_internal.h"
+
 void TF_WriteImpl(TinyFrame *tf, const uint8_t *buff, size_t len)
 {
     GexClient *gc = tf->userdata;

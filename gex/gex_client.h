@@ -10,13 +10,6 @@
 #include <stdbool.h>
 #include "TinyFrame.h"
 
-struct gex_client_ {
-    TinyFrame *tf;
-    const char *acm_device;
-    int acm_fd;
-    bool connected;
-};
-
 typedef struct gex_client_ GexClient;
 
 /**
@@ -37,15 +30,23 @@ void GEX_Poll(GexClient *gex);
 /**
  * Safely release all resources used up by GEX_Init()
  *
- * @param gc - the allocated client structure
+ * @param gex - the allocated client structure
  */
-void GEX_DeInit(GexClient *gc);
+void GEX_DeInit(GexClient *gex);
 
-// --- Internal ---
 /**
- * This is accessed by TF_WriteImpl().
- * To be removed once TF supports multiple instances, i.e. without globals
+ * Query a unit
+ *
+ * @param gex - client instance
+ * @param unit - unit name
+ * @param cmd - command (hex)
+ * @param payload - payload for the unit
+ * @param len - number of bytes in the payload
+ * @param listener - TF listener function called for the response
  */
-extern int gex_serial_fd;
+void GEX_QueryUnit(GexClient *gex,
+                   const char *unit, uint8_t cmd,
+                   uint8_t *payload, uint32_t len,
+                   TF_Listener listener);
 
 #endif //GEX_CLIENT_GEX_CLIENT_H
