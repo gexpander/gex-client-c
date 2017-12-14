@@ -7,17 +7,16 @@
 #include <unistd.h>
 #include <signal.h>
 #include  <stdlib.h>
-#include <protocol/TinyFrame.h>
 #include <string.h>
 #include <errno.h>
 
+#include "TinyFrame.h"
 #include "gex_client.h"
 #include "serial.h"
-#include "hexdump.h"
 
 int gex_serial_fd = -1;
 
-
+/** ^C handler to close it gracefully */
 static void sigintHandler(int sig)
 {
 	if (gex_serial_fd != -1) {

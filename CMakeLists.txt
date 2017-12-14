@@ -9,17 +9,17 @@ set(SOURCE_FILES
         gex/serial/serial.h
         gex/gex_client.c
         gex/gex_client.h
-        gex/hexdump.c
-        gex/hexdump.h
-        gex/TF_Integration.c
-        gex/protocol/payload_builder.c
-        gex/protocol/payload_builder.h
-        gex/protocol/payload_parser.c
-        gex/protocol/payload_parser.h
+        gex/utils/hexdump.c
+        gex/utils/hexdump.h
+        gex/protocol/TF_Integration.c
+        gex/utils/payload_builder.c
+        gex/utils/payload_builder.h
+        gex/utils/payload_parser.c
+        gex/utils/payload_parser.h
         gex/protocol/TF_Config.h
         gex/protocol/TinyFrame.c
         gex/protocol/TinyFrame.h
-        gex/protocol/type_coerce.h
+        gex/utils/type_coerce.h
 )
 
 include_directories(
