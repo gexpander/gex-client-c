@@ -44,9 +44,39 @@ void GEX_DeInit(GexClient *gex);
  * @param len - number of bytes in the payload
  * @param listener - TF listener function called for the response
  */
-void GEX_QueryUnit(GexClient *gex,
-                   const char *unit, uint8_t cmd,
-                   uint8_t *payload, uint32_t len,
-                   TF_Listener listener);
+void GEX_Query(GexClient *gex,
+               const char *unit, uint8_t cmd,
+               uint8_t *payload, uint32_t len,
+               TF_Listener listener);
+
+/**
+ * Query a unit and return the response. The resulting message (including payload) is
+ * copied to a internal holder variable. Do not attempt to free it!
+ *
+ * @attention Calling `GEX_SyncQuery` destroys the previous sync query message and payload.
+ *
+ * @param gex - client instance
+ * @param unit - unit name
+ * @param cmd - command (hex)
+ * @param payload - payload for the unit
+ * @param len - number of bytes in the payload
+ * @return a clone of the response, or NULL if none arrived in time.
+*/
+TF_Msg *GEX_SyncQuery(GexClient *gex,
+                      const char *unit, uint8_t cmd,
+                      uint8_t *payload, uint32_t len);
+
+/**
+ * Send a command with response no listener
+ *
+ * @param gex - client instance
+ * @param unit - unit name
+ * @param cmd - command (hex)
+ * @param payload - payload for the unit
+ * @param len - number of bytes in the payload
+ */
+void GEX_Send(GexClient *gex,
+              const char *unit, uint8_t cmd,
+              uint8_t *payload, uint32_t len);
 
 #endif //GEX_CLIENT_GEX_CLIENT_H
