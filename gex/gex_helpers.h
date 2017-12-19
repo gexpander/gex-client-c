@@ -9,17 +9,16 @@
 #error "Include gex.h instead!"
 #endif
 
-#include "gex_internal.h"
 #include "gex_defines.h"
 
 /** Delete recursively all GEX callsign look-up table entries */
 void gex_destroy_unit_lookup(GexClient *gex);
 
 /** Get lookup entry for unit name */
-struct gex_unit *gex_find_unit_by_callsign(GexClient *gex, uint8_t callsign);
+GexUnit *gex_find_unit_by_callsign(GexClient *gex, uint8_t callsign);
 
 /** Get lookup entry for unit name */
-struct gex_unit *gex_find_unit_by_name(GexClient *gex, const char *name);
+GexUnit *gex_find_unit_by_name(GexClient *gex, const char *name);
 
 /** Get callsign for unit name */
 uint8_t gex_find_callsign_by_name(GexClient *gex, const char *name);

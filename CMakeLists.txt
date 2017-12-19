@@ -3,6 +3,8 @@ project(gex_client)
 
 set(CMAKE_C_STANDARD 99)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror")
+
 set(SOURCE_FILES
         main.c
         gex/serial/serial.c

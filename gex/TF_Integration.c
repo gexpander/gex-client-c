@@ -6,7 +6,7 @@
 
 #include "TinyFrame.h"
 
-#define GEX_H // to allow including other headers
+#include "gex.h"
 #include "gex_internal.h"
 
 void TF_WriteImpl(TinyFrame *tf, const uint8_t *buff, size_t len)
@@ -15,7 +15,7 @@ void TF_WriteImpl(TinyFrame *tf, const uint8_t *buff, size_t len)
 	assert(gc->acm_fd != 0);
 
 	ssize_t rv = write(gc->acm_fd, buff, len);
-	if (rv != len) {
+	if (rv != (ssize_t)len) {
 		fprintf(stderr, "ERROR %d in TF write: %s\n", errno, strerror(errno));
 	}
 }
@@ -23,11 +23,11 @@ void TF_WriteImpl(TinyFrame *tf, const uint8_t *buff, size_t len)
 /** Claim the TX interface before composing and sending a frame */
 void TF_ClaimTx(TinyFrame *tf)
 {
-    //
+    (void)tf;
 }
 
 /** Free the TX interface after composing and sending a frame */
 void TF_ReleaseTx(TinyFrame *tf)
 {
-    //
+    (void)tf;
 }

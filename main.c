@@ -10,6 +10,8 @@ static GexClient *gex;
 /** ^C handler to close it gracefully */
 static void sigintHandler(int sig)
 {
+    (void)sig;
+
     if (gex != NULL) {
         GEX_DeInit(gex);
     }
@@ -18,7 +20,7 @@ static void sigintHandler(int sig)
 
 #define LED_CMD_TOGGLE 0x02
 
-int main()
+int main(void)
 {
     // Bind ^C handler for safe shutdown
     signal(SIGINT, sigintHandler);

@@ -9,6 +9,13 @@
 #include <stdbool.h>
 #include "gex_client.h"
 
+#ifndef MAX
+#define MAX(a, b) ((a)>(b)?(a):(b))
+#endif
+#ifndef MIN
+#define MIN(a, b) ((a)<(b)?(a):(b))
+#endif
+
 struct gex_client {
     TinyFrame *tf;          //!< TinyFrame instance
     const char *acm_device; //!< Comport device name, might be used to reconnect (?)
@@ -16,9 +23,9 @@ struct gex_client {
     bool connected;         //!< Flag that we're currently connected to the comport
 
     // synchronous query "hacks"
-    bool sync_query_ok;         //!< flag that the query response was received
-    GexMsg sync_query_response; //!< response message, copied here
-    uint8_t sync_query_buffer[TF_MAX_PAYLOAD_RX]; //!< buffer for the rx payload to be copied here
+    bool squery_ok;         //!< flag that the query response was received
+    GexMsg squery_msg; //!< response message, copied here
+    uint8_t squery_buffer[TF_MAX_PAYLOAD_RX]; //!< buffer for the rx payload to be copied here
 
     GexEventListener fallback_report_handler;
 

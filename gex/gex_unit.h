@@ -13,6 +13,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+// TODO proper descriptions
+
 /** Send a command with no listener */
 void GEX_Send(GexUnit *unit, uint8_t cmd, const uint8_t *payload, uint32_t len);
 
@@ -28,36 +30,22 @@ GexMsg GEX_Query(GexUnit *unit, uint8_t cmd, const uint8_t *payload, uint32_t le
 /** Asynchronous query with an async listener */
 void GEX_QueryAsync(GexUnit *unit, uint8_t cmd, const uint8_t *payload, uint32_t len, GexEventListener lst);
 
-
 /**
  * Bulk read from a unit, synchronous
  *
  * @param unit - the unit to target
- * @param cmd - initial request command
- * @param payload - initial request payload
- * @param len - initial request payload length
- * @param buffer - destination buffer
- * @param capacity - size of the buffer, max nr of bytes to receive
+ * @param bulk - the bulk transport info struct
  * @return actual number of bytes received.
  */
-uint32_t GEX_BulkRead(GexUnit *unit, uint8_t cmd,
-                      const uint8_t *payload, uint32_t len,
-                      uint8_t *buffer, uint32_t capacity);
-
+uint32_t GEX_BulkRead(GexUnit *unit, GexBulk *bulk);
 
 /**
  * Bulk write to a unit, synchronous
  *
  * @param unit - the unit to target
- * @param cmd - initial request command
- * @param payload - initial request payload
- * @param len - initial request payload length
- * @param buffer - destination buffer
- * @param capacity - size of the buffer, max nr of bytes to receive
+ * @param bulk - the bulk transport info struct
  * @return true on success
  */
-bool GEX_BulkWrite(GexUnit *unit, uint8_t cmd,
-                   const uint8_t *payload, uint32_t len,
-                   const uint8_t *buffer, uint32_t capacity);
+bool GEX_BulkWrite(GexUnit *unit, GexBulk *bulk);
 
 #endif //GEX_CLIENT_GEX_UNIT_H
