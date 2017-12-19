@@ -50,7 +50,6 @@ static TF_Result unit_report_lst(TinyFrame *tf, TF_Msg *msg)
     };
 
     GexMsg gexMsg = {
-        .session = msg->frame_id,
         .payload = (uint8_t *) (msg->data + 2),
         .len = (uint32_t) (msg->len - 2),
         .type = rpt_type,

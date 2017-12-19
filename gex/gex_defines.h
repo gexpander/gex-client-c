@@ -28,14 +28,10 @@ typedef void (*GexEventListener)(GexMsg msg);
  * Contains all needed information to lead a multi-part dialogue.
  */
 struct gex_msg {
-    GexUnit *unit;
-    uint8_t *payload;
-    uint32_t len;
-    GexSession session;
-    union {
-        uint8_t cmd;
-        uint8_t type;
-    };
+    GexUnit *unit;       //!< Unit this message belongs to
+    uint8_t *payload;    //!< Useful payload
+    uint32_t len;        //!< Payload length
+    uint8_t type;        //!< Message type (e.g. MSG_ERROR), or report type in event handler
 };
 
 /**

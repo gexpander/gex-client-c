@@ -20,7 +20,7 @@
  * @param lst - TF listener to handle the response, can be NULL
  * @param userdata2 userdata2 argument for the TF listener's message
  */
-static void GEX_LL_Query(GexUnit *unit, uint8_t cmd, uint8_t *payload, uint32_t len, TF_Listener lst, void *userdata2)
+static void GEX_LL_Query(GexUnit *unit, uint8_t cmd, const uint8_t *payload, uint32_t len, TF_Listener lst, void *userdata2)
 {
     assert(unit != NULL);
     assert(unit->gex != NULL);
@@ -51,7 +51,7 @@ static void GEX_LL_Query(GexUnit *unit, uint8_t cmd, uint8_t *payload, uint32_t 
 }
 
 /** Send with no listener, don't wait for response */
-void GEX_Send(GexUnit *unit, uint8_t cmd, uint8_t *payload, uint32_t len)
+void GEX_Send(GexUnit *unit, uint8_t cmd, const uint8_t *payload, uint32_t len)
 {
     assert(unit != NULL);
     assert(unit->gex != NULL);
@@ -67,7 +67,6 @@ static TF_Result sync_query_lst(TinyFrame *tf, TF_Msg *msg)
 
     // clone the message
     gex->sync_query_response.len = msg->len;
-    gex->sync_query_response.session = msg->frame_id;
     gex->sync_query_response.unit = msg->userdata;
     gex->sync_query_response.type = msg->type;
     // clone the buffer
@@ -78,7 +77,7 @@ static TF_Result sync_query_lst(TinyFrame *tf, TF_Msg *msg)
 }
 
 /** Static query */
-GexMsg GEX_Query(GexUnit *unit, uint8_t cmd, uint8_t *payload, uint32_t len)
+GexMsg GEX_Query(GexUnit *unit, uint8_t cmd, const uint8_t *payload, uint32_t len)
 {
     assert(unit != NULL);
     assert(unit->gex != NULL);
@@ -89,7 +88,6 @@ GexMsg GEX_Query(GexUnit *unit, uint8_t cmd, uint8_t *payload, uint32_t len)
 
     // Default response that will be used if nothing is received
     gex->sync_query_response.unit = unit;
-    gex->sync_query_response.session = 0;
     gex->sync_query_response.type = MSG_ERROR;
     sprintf((char *) gex->sync_query_buffer, "TIMEOUT");
     gex->sync_query_response.len = (uint32_t) strlen("TIMEOUT");
@@ -125,7 +123,7 @@ static TF_Result async_query_lst(TinyFrame *tf, TF_Msg *msg)
 }
 
 /** Sync query, without poll */
-void GEX_QueryAsync(GexUnit *unit, uint8_t cmd, uint8_t *payload, uint32_t len, GexEventListener lst)
+void GEX_QueryAsync(GexUnit *unit, uint8_t cmd, const uint8_t *payload, uint32_t len, GexEventListener lst)
 {
     assert(unit != NULL);
     assert(unit->gex != NULL);
