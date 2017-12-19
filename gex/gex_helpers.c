@@ -8,7 +8,7 @@
 #include "gex_helpers.h"
 
 /** Delete recursively all GEX callsign look-up table entries */
-void destroy_unit_lookup(GexClient *gex)
+void gex_destroy_unit_lookup(GexClient *gex)
 {
     struct gex_unit_lu *next = gex->ulu_head;
     while (next != NULL) {
@@ -20,7 +20,7 @@ void destroy_unit_lookup(GexClient *gex)
 }
 
 /** Get lookup entry for unit name */
-struct gex_unit_lu *find_unit_by_callsign(GexClient *gex, uint8_t callsign)
+struct gex_unit_lu *gex_find_unit_by_callsign(GexClient *gex, uint8_t callsign)
 {
     struct gex_unit_lu *next = gex->ulu_head;
     while (next != NULL) {
@@ -33,7 +33,7 @@ struct gex_unit_lu *find_unit_by_callsign(GexClient *gex, uint8_t callsign)
 }
 
 /** Get lookup entry for unit name */
-struct gex_unit_lu *find_unit_by_name(GexClient *gex, const char *name)
+struct gex_unit_lu *gex_find_unit_by_name(GexClient *gex, const char *name)
 {
     struct gex_unit_lu *next = gex->ulu_head;
     while (next != NULL) {
@@ -46,8 +46,8 @@ struct gex_unit_lu *find_unit_by_name(GexClient *gex, const char *name)
 }
 
 /** Get callsign for unit name */
-uint8_t find_callsign_by_name(GexClient *gex, const char *name)
+uint8_t gex_find_callsign_by_name(GexClient *gex, const char *name)
 {
-    struct gex_unit_lu *lu = find_unit_by_name(gex, name);
+    struct gex_unit_lu *lu = gex_find_unit_by_name(gex, name);
     return (uint8_t) ((lu == NULL) ? 0 : lu->callsign);
 }
