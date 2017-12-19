@@ -14,10 +14,11 @@
 #include "serial.h"
 #include "gex_client_internal.h"
 #include "gex_message_types.h"
+#include "gex_helpers.h"
 #include "utils/payload_parser.h"
 
 /** Callback for ping */
-TF_Result connectivityCheckCb(TinyFrame *tf, TF_Msg *msg)
+static TF_Result connectivity_check_lst(TinyFrame *tf, TF_Msg *msg)
 {
     GexClient *gex = tf->userdata;
     gex->connected = true;
@@ -25,36 +26,31 @@ TF_Result connectivityCheckCb(TinyFrame *tf, TF_Msg *msg)
     return TF_CLOSE;
 }
 
-
-/** Delete recursively all GEX callsign look-up table entries */
-static void destroy_unit_lookup(GexClient *gex)
+/** Callback for ping */
+static TF_Result unit_report_lst(TinyFrame *tf, TF_Msg *msg)
 {
-    struct gex_name_lu *next = gex->ulu_head;
-    while (next != NULL) {
-        struct gex_name_lu *cur = next;
-        next = next->next;
-        free(cur);
+    GexClient *gex = tf->userdata;
+
+    // payload must start by callsign and report type.
+    if (msg->len < 2) goto done;
+    uint8_t callsign = msg->data[0];
+    uint8_t rpt_type = msg->data[1];
+
+    struct gex_unit_lu *lu = find_unit_by_callsign(gex, callsign);
+    if (lu && lu->report_handler) {
+        lu->report_handler(gex, lu->name, rpt_type,
+                           msg->data+2, (uint32_t) (msg->len - 2));
+    } else if (gex->fallback_report_handler) {
+        gex->fallback_report_handler(gex, (lu ? lu->name : "UNKNOWN"), rpt_type,
+                                     msg->data+2, (uint32_t) (msg->len - 2));
     }
-    gex->ulu_head = NULL;
+
+done:
+    return TF_STAY;
 }
-
-
-/** Get callsign for unit name */
-static uint8_t find_callsign_by_name(GexClient *gex, const char *name)
-{
-    struct gex_name_lu *next = gex->ulu_head;
-    while (next != NULL) {
-        if (strcmp(next->name, name) == 0) {
-            return next->callsign;
-        }
-        next = next->next;
-    }
-    return 0;
-}
-
 
 /** Listener for the "list units" query response */
-TF_Result listUnitsCb(TinyFrame *tf, TF_Msg *msg)
+static TF_Result list_units_lst(TinyFrame *tf, TF_Msg *msg)
 {
     GexClient *gex = tf->userdata;
 
@@ -63,18 +59,19 @@ TF_Result listUnitsCb(TinyFrame *tf, TF_Msg *msg)
     PayloadParser pp = pp_start((uint8_t*)msg->data, msg->len, NULL);
     uint8_t count = pp_u8(&pp);
     char buf[100];
-    struct gex_name_lu *tail = NULL;
-    for(int i=0; i< count; i++) {
-        uint8_t cs = pp_u8(&pp);
+    struct gex_unit_lu *tail = NULL;
+    for(int i = 0; i < count; i++) {
+        uint8_t callsign = pp_u8(&pp);
         pp_string(&pp, buf, 100);
-        fprintf(stderr, "Available unit \"%s\" @ %d\n", buf, cs);
+        fprintf(stderr, "Available unit \"%s\" @ %d\n", buf, callsign);
 
         // append
-        struct gex_name_lu *lu = malloc(sizeof(struct gex_name_lu));
+        struct gex_unit_lu *lu = malloc(sizeof(struct gex_unit_lu));
         lu->next = NULL;
         lu->type = "UNKNOWN";
         lu->name = strdup(buf);
-        lu->callsign = cs;
+        lu->callsign = callsign;
+        lu->report_handler = NULL;
         if (tail == NULL) {
             gex->ulu_head = lu;
         } else {
@@ -86,6 +83,22 @@ TF_Result listUnitsCb(TinyFrame *tf, TF_Msg *msg)
     return TF_CLOSE;
 }
 
+/** Bind report listener */
+void GEX_OnReport(GexClient *gex, const char *unit_name, GEX_ReportListener lst)
+{
+    if (!unit_name) {
+        gex->fallback_report_handler = lst;
+    }
+    else {
+        struct gex_unit_lu *lu = find_unit_by_name(gex, unit_name);
+        if (!lu) {
+            fprintf(stderr, "No unit named \"%s\"!", unit_name);
+        }
+        else {
+            lu->report_handler = lst;
+        }
+    }
+}
 
 /** Create a instance and connect */
 GexClient *GEX_Init(const char *device, int timeout_ms)
@@ -108,7 +121,7 @@ GexClient *GEX_Init(const char *device, int timeout_ms)
     gex->tf->userdata = gex;
 
     // --- Test connectivity ---
-    TF_QuerySimple(gex->tf, MSG_PING, /*pld*/ NULL, 0, /*cb*/ connectivityCheckCb, 0);
+    TF_QuerySimple(gex->tf, MSG_PING, /*pld*/ NULL, 0, /*cb*/ connectivity_check_lst, 0);
     GEX_Poll(gex);
 
     if (!gex->connected) {
@@ -118,8 +131,10 @@ GexClient *GEX_Init(const char *device, int timeout_ms)
     }
 
     // --- populate callsign look-up table ---
-    TF_QuerySimple(gex->tf, MSG_LIST_UNITS, /*pld*/ NULL, 0, /*cb*/ listUnitsCb, 0);
+    TF_QuerySimple(gex->tf, MSG_LIST_UNITS, /*pld*/ NULL, 0, /*cb*/ list_units_lst, 0);
     GEX_Poll(gex);
+
+    TF_AddTypeListener(gex->tf, MSG_UNIT_REPORT, unit_report_lst);
 
     return gex;
 }
@@ -159,14 +174,14 @@ void GEX_Query(GexClient *gex,
                uint8_t *payload, uint32_t len,
                TF_Listener listener)
 {
-    uint8_t cs = find_callsign_by_name(gex, unit);
-    assert(cs != 0);
+    uint8_t callsign = find_callsign_by_name(gex, unit);
+    assert(callsign != 0);
     uint8_t *pld = malloc(len + 2);
     assert(pld != NULL);
 
     // prefix the actual payload with the callsign and command bytes.
     // TODO provide TF API for sending the payload externally in smaller chunks? Will avoid the malloc here
-    pld[0] = cs;
+    pld[0] = callsign;
     pld[1] = cmd;
     memcpy(pld+2, payload, len);
 
@@ -217,5 +232,3 @@ void GEX_Send(GexClient *gex,
 {
     GEX_Query(gex, unit, cmd, payload, len, NULL);
 }
-
-// TODO add listener for spontaneous device reports with user configurable handler (per unit)

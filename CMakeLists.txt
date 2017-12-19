@@ -9,6 +9,8 @@ set(SOURCE_FILES
         gex/serial/serial.h
         gex/gex_client.c
         gex/gex_client.h
+        gex/gex_helpers.c
+        gex/gex_helpers.h
         gex/gex_client_internal.h
         gex/gex_message_types.h
         gex/utils/hexdump.c

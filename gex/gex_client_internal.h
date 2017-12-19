@@ -5,11 +5,12 @@
 #ifndef GEX_CLIENT_GEX_CLIENT_INTERNAL_H
 #define GEX_CLIENT_GEX_CLIENT_INTERNAL_H
 
-struct gex_name_lu {
+struct gex_unit_lu {
     char *name;               //!< Unit name
     char *type;               //!< Unit type
     uint8_t callsign;         //!< Unit callsign byte
-    struct gex_name_lu *next; //!< Pointer to the next entry in this linked list, or NULL if none
+    GEX_ReportListener report_handler; //!< Report handling function
+    struct gex_unit_lu *next; //!< Pointer to the next entry in this linked list, or NULL if none
 };
 
 struct gex_client_ {
@@ -23,7 +24,9 @@ struct gex_client_ {
     TF_Msg sync_query_response; //!< response message, copied here
     uint8_t sync_query_buffer[TF_MAX_PAYLOAD_RX]; //!< buffer for the rx payload to be copied here
 
-    struct gex_name_lu *ulu_head; //!< Units look-up linked list
+    GEX_ReportListener fallback_report_handler;
+
+    struct gex_unit_lu *ulu_head; //!< Units look-up linked list
 };
 
 #endif //GEX_CLIENT_GEX_CLIENT_INTERNAL_H

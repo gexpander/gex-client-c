@@ -12,6 +12,18 @@
 
 typedef struct gex_client_ GexClient;
 
+/** Callback for spontaneous reports from units */
+typedef void (*GEX_ReportListener)(GexClient *gex, const char *unit, uint8_t code, const uint8_t *payload, uint32_t len);
+
+/**
+ * Bind a report listener
+ *
+ * @param gex - client
+ * @param unit_name - name of the listened for unit, NULL to bind a fallback listener
+ * @param lst - the listener
+ */
+void GEX_OnReport(GexClient *gex, const char *unit_name, GEX_ReportListener lst);
+
 /**
  * Initialize the GEX client
  *
