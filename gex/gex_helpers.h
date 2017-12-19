@@ -5,8 +5,8 @@
 #ifndef GEX_CLIENT_GEX_HELPERS_H
 #define GEX_CLIENT_GEX_HELPERS_H
 
-#include "gex_client_internal.h"
-#include "gex_client.h"
+#include "gex_internal.h"
+#include "gex_defines.h"
 
 /** Delete recursively all GEX callsign look-up table entries */
 void destroy_unit_lookup(GexClient *gex);

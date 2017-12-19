@@ -11,7 +11,7 @@ set(SOURCE_FILES
         gex/gex_client.h
         gex/gex_helpers.c
         gex/gex_helpers.h
-        gex/gex_client_internal.h
+        gex/gex_internal.h
         gex/gex_message_types.h
         gex/utils/hexdump.c
         gex/utils/hexdump.h
@@ -24,7 +24,7 @@ set(SOURCE_FILES
         gex/protocol/TinyFrame.c
         gex/protocol/TinyFrame.h
         gex/utils/type_coerce.h
-)
+        gex/gex_defines.h)
 
 include_directories(
         gex

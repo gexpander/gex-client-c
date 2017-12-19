@@ -5,6 +5,10 @@
 #ifndef GEX_CLIENT_GEX_CLIENT_INTERNAL_H
 #define GEX_CLIENT_GEX_CLIENT_INTERNAL_H
 
+#include <stdint.h>
+#include <stdbool.h>
+#include "gex_client.h"
+
 struct gex_unit_lu {
     char *name;               //!< Unit name
     char *type;               //!< Unit type

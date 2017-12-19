@@ -2,8 +2,10 @@
 // Created by MightyPork on 2017/12/19.
 //
 
+#include <malloc.h>
+
+#include "gex_defines.h"
 #include "gex_helpers.h"
-#include "gex_client_internal.h"
 
 /** Delete recursively all GEX callsign look-up table entries */
 void destroy_unit_lookup(GexClient *gex)

@@ -9,11 +9,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "TinyFrame.h"
-
-typedef struct gex_client_ GexClient;
-
-/** Callback for spontaneous reports from units */
-typedef void (*GEX_ReportListener)(GexClient *gex, const char *unit, uint8_t code, const uint8_t *payload, uint32_t len);
+#include "gex_defines.h"
 
 /**
  * Bind a report listener

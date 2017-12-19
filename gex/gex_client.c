@@ -12,7 +12,7 @@
 
 #include "gex_client.h"
 #include "serial.h"
-#include "gex_client_internal.h"
+#include "gex_internal.h"
 #include "gex_message_types.h"
 #include "gex_helpers.h"
 #include "utils/payload_parser.h"
