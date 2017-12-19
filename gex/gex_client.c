@@ -36,13 +36,30 @@ static TF_Result unit_report_lst(TinyFrame *tf, TF_Msg *msg)
     uint8_t callsign = msg->data[0];
     uint8_t rpt_type = msg->data[1];
 
-    struct gex_unit_lu *lu = gex_find_unit_by_callsign(gex, callsign);
+    struct gex_unit *lu = gex_find_unit_by_callsign(gex, callsign);
+
+    // NULL object pattern - we use a fake unit if no unit matched.
+    GexUnit fbu = {
+        .callsign = 0,
+        .report_handler = NULL,
+        .type = "NONE",
+        .name = "FALLBACK",
+        .gex = gex, // gex must be available here - this is why we can't have this static or const.
+        .next = NULL,
+    };
+
+    GexMsg gexMsg = {
+        .session = msg->frame_id,
+        .payload = (uint8_t *) (msg->data + 2),
+        .len = (uint32_t) (msg->len - 2),
+        .type = rpt_type,
+        .unit = (lu == NULL) ? fbu : lu,
+    };
+
     if (lu && lu->report_handler) {
-        lu->report_handler(gex, lu->name, rpt_type,
-                           msg->data+2, (uint32_t) (msg->len - 2));
+        lu->report_handler(gexMsg);
     } else if (gex->fallback_report_handler) {
-        gex->fallback_report_handler(gex, (lu ? lu->name : "UNKNOWN"), rpt_type,
-                                     msg->data+2, (uint32_t) (msg->len - 2));
+        gex->fallback_report_handler(gexMsg);
     }
 
 done:
@@ -59,14 +76,14 @@ static TF_Result list_units_lst(TinyFrame *tf, TF_Msg *msg)
     PayloadParser pp = pp_start((uint8_t*)msg->data, msg->len, NULL);
     uint8_t count = pp_u8(&pp);
     char buf[100];
-    struct gex_unit_lu *tail = NULL;
+    struct gex_unit *tail = NULL;
     for(int i = 0; i < count; i++) {
         uint8_t callsign = pp_u8(&pp);
         pp_string(&pp, buf, 100);
         fprintf(stderr, "- Found unit \"%s\" @ callsign %d\n", buf, callsign);
 
         // append
-        struct gex_unit_lu *lu = malloc(sizeof(struct gex_unit_lu));
+        struct gex_unit *lu = malloc(sizeof(struct gex_unit));
         lu->next = NULL;
         lu->type = "UNKNOWN";
         lu->name = strdup(buf);
@@ -84,19 +101,13 @@ static TF_Result list_units_lst(TinyFrame *tf, TF_Msg *msg)
 }
 
 /** Bind report listener */
-void GEX_OnReport(GexClient *gex, const char *unit_name, GEX_ReportListener lst)
+void GEX_OnReport(GexClient *gex, GexUnit *unit, GexEventListener lst)
 {
-    if (!unit_name) {
+    if (!unit) {
         gex->fallback_report_handler = lst;
     }
     else {
-        struct gex_unit_lu *lu = gex_find_unit_by_name(gex, unit_name);
-        if (!lu) {
-            fprintf(stderr, "No unit named \"%s\", can't bind listener!", unit_name);
-        }
-        else {
-            lu->report_handler = lst;
-        }
+        unit->report_handler = lst;
     }
 }
 
@@ -142,7 +153,6 @@ GexClient *GEX_Init(const char *device, int timeout_ms)
     return gex;
 }
 
-
 /** Try to read from the serial port and process any received bytes with TF */
 void GEX_Poll(GexClient *gex)
 {
@@ -150,15 +160,13 @@ void GEX_Poll(GexClient *gex)
 
     assert(gex != NULL);
 
-    ssize_t len = read(gex->acm_fd, pollbuffer, TF_MAX_PAYLOAD_RX);
+    ssize_t len = read(gex->acm_fd, pollbuffer, TF_MAX_PAYLOAD_RX); // TODO wait only for expect amount?
     if (len < 0) {
         fprintf(stderr, "ERROR %d in GEX Poll: %s\n", errno, strerror(errno));
     } else {
-        //hexDump("Received", pollbuffer, (uint32_t) len);
         TF_Accept(gex->tf, pollbuffer, (size_t) len);
     }
 }
-
 
 /** Free the struct */
 void GEX_DeInit(GexClient *gex)
@@ -168,70 +176,4 @@ void GEX_DeInit(GexClient *gex)
     gex_destroy_unit_lookup(gex);
     TF_DeInit(gex->tf);
     free(gex);
-}
-
-
-/** Query a unit */
-void GEX_Query(GexClient *gex,
-               const char *unit, uint8_t cmd,
-               uint8_t *payload, uint32_t len,
-               TF_Listener listener)
-{
-    uint8_t callsign = gex_find_callsign_by_name(gex, unit);
-    assert(callsign != 0);
-    uint8_t *pld = malloc(len + 2);
-    assert(pld != NULL);
-    {
-        // prefix the actual payload with the callsign and command bytes.
-        // TODO provide TF API for sending the payload externally in smaller chunks? Will avoid the malloc here
-        pld[0] = callsign;
-        pld[1] = cmd;
-        memcpy(pld + 2, payload, len);
-
-        TF_Msg msg;
-        TF_ClearMsg(&msg);
-        msg.type = MSG_UNIT_REQUEST;
-        msg.data = pld;
-        msg.len = (TF_LEN) (len + 2);
-        TF_Query(gex->tf, &msg, listener, 0);
-    }
-    free(pld);
-
-    if (NULL != listener) {
-        GEX_Poll(gex);
-    }
-}
-
-
-/** listener for the synchronous query functionality */
-static TF_Result sync_query_lst(TinyFrame *tf, TF_Msg *msg)
-{
-    GexClient *gex = tf->userdata;
-    // clone the message
-    memcpy(&gex->sync_query_response, msg, sizeof(TF_Msg));
-    // clone the buffer
-    if (msg->len > 0) memcpy(gex->sync_query_buffer, msg->data, msg->len);
-    // re-link the buffer
-    gex->sync_query_response.data = gex->sync_query_buffer;
-    gex->sync_query_ok = true;
-}
-
-
-/** Query a unit. The response is expected to be relatively short. */
-TF_Msg *GEX_SyncQuery(GexClient *gex,
-                   const char *unit, uint8_t cmd,
-                   uint8_t *payload, uint32_t len)
-{
-    gex->sync_query_ok = false;
-    memset(&gex->sync_query_response, 0, sizeof(TF_Msg));
-    GEX_Query(gex, unit, cmd, payload, len, sync_query_lst);
-    return gex->sync_query_ok ? &gex->sync_query_response : NULL;
-}
-
-/** Command a unit (same like query, but without listener and without polling) */
-void GEX_Send(GexClient *gex,
-              const char *unit, uint8_t cmd,
-              uint8_t *payload, uint32_t len)
-{
-    GEX_Query(gex, unit, cmd, payload, len, NULL);
 }

@@ -12,13 +12,15 @@
 #include "gex_defines.h"
 
 /**
- * Bind a report listener
+ * Bind a report listener. The listener is called with a message object when
+ * a spontaneous report is received. If no known unit matched the report,
+ * a dummy unit is provided to avoid NULL access.
  *
  * @param gex - client
- * @param unit_name - name of the listened for unit, NULL to bind a fallback listener
+ * @param unit - the handled unit, NULL to bind a fallback listener (fallback may receive events from all unhandled units)
  * @param lst - the listener
  */
-void GEX_OnReport(GexClient *gex, const char *unit_name, GEX_ReportListener lst);
+void GEX_OnReport(GexClient *gex, GexUnit *unit, GexEventListener lst);
 
 /**
  * Initialize the GEX client
@@ -41,50 +43,5 @@ void GEX_Poll(GexClient *gex);
  * @param gex - the allocated client structure
  */
 void GEX_DeInit(GexClient *gex);
-
-/**
- * Query a unit
- *
- * @param gex - client instance
- * @param unit - unit name
- * @param cmd - command (hex)
- * @param payload - payload for the unit
- * @param len - number of bytes in the payload
- * @param listener - TF listener function called for the response
- */
-void GEX_Query(GexClient *gex,
-               const char *unit, uint8_t cmd,
-               uint8_t *payload, uint32_t len,
-               TF_Listener listener);
-
-/**
- * Query a unit and return the response. The resulting message (including payload) is
- * copied to a internal holder variable. Do not attempt to free it!
- *
- * @attention Calling `GEX_SyncQuery` destroys the previous sync query message and payload.
- *
- * @param gex - client instance
- * @param unit - unit name
- * @param cmd - command (hex)
- * @param payload - payload for the unit
- * @param len - number of bytes in the payload
- * @return a clone of the response, or NULL if none arrived in time.
-*/
-TF_Msg *GEX_SyncQuery(GexClient *gex,
-                      const char *unit, uint8_t cmd,
-                      uint8_t *payload, uint32_t len);
-
-/**
- * Send a command with response no listener
- *
- * @param gex - client instance
- * @param unit - unit name
- * @param cmd - command (hex)
- * @param payload - payload for the unit
- * @param len - number of bytes in the payload
- */
-void GEX_Send(GexClient *gex,
-              const char *unit, uint8_t cmd,
-              uint8_t *payload, uint32_t len);
 
 #endif //GEX_CLIENT_GEX_CLIENT_H

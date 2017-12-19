@@ -9,15 +9,7 @@
 #include <stdbool.h>
 #include "gex_client.h"
 
-struct gex_unit_lu {
-    char *name;               //!< Unit name
-    char *type;               //!< Unit type
-    uint8_t callsign;         //!< Unit callsign byte
-    GEX_ReportListener report_handler; //!< Report handling function
-    struct gex_unit_lu *next; //!< Pointer to the next entry in this linked list, or NULL if none
-};
-
-struct gex_client_ {
+struct gex_client {
     TinyFrame *tf;          //!< TinyFrame instance
     const char *acm_device; //!< Comport device name, might be used to reconnect (?)
     int acm_fd;             //!< Open comport file descriptor
@@ -25,12 +17,12 @@ struct gex_client_ {
 
     // synchronous query "hacks"
     bool sync_query_ok;         //!< flag that the query response was received
-    TF_Msg sync_query_response; //!< response message, copied here
+    GexMsg sync_query_response; //!< response message, copied here
     uint8_t sync_query_buffer[TF_MAX_PAYLOAD_RX]; //!< buffer for the rx payload to be copied here
 
-    GEX_ReportListener fallback_report_handler;
+    GexEventListener fallback_report_handler;
 
-    struct gex_unit_lu *ulu_head; //!< Units look-up linked list
+    struct gex_unit *ulu_head; //!< Units look-up linked list
 };
 
 #endif //GEX_CLIENT_GEX_CLIENT_INTERNAL_H
