@@ -5,8 +5,14 @@
 #ifndef GEX_CLIENT_GEX_DEFINES_H
 #define GEX_CLIENT_GEX_DEFINES_H
 
+#ifndef GEX_H
+#error "Include gex.h instead!"
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
+
+#include "TinyFrame.h"
 
 typedef TF_ID GexSession;
 

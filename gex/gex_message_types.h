@@ -5,6 +5,10 @@
 #ifndef GEX_CLIENT_GEX_MESSAGE_TYPES_H
 #define GEX_CLIENT_GEX_MESSAGE_TYPES_H
 
+#ifndef GEX_H
+#error "Include gex.h instead!"
+#endif
+
 /**
  * Supported message types (TF_TYPE)
  */

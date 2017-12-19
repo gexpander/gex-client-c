@@ -4,6 +4,8 @@
 
 #include <malloc.h>
 #include <assert.h>
+
+#define GEX_H // to allow including other headers
 #include "gex_defines.h"
 #include "gex_helpers.h"
 #include "gex_message_types.h"
@@ -20,9 +22,12 @@
  */
 static void GEX_LL_Query(GexUnit *unit, uint8_t cmd, uint8_t *payload, uint32_t len, TF_Listener lst, void *userdata2)
 {
+    assert(unit != NULL);
+    assert(unit->gex != NULL);
+
     GexClient *gex = unit->gex;
 
-    uint8_t callsign = gex_find_callsign_by_name(gex, unit);
+    uint8_t callsign = unit->callsign;
     assert(callsign != 0);
     uint8_t *pld = malloc(len + 2);
     assert(pld != NULL);
@@ -48,6 +53,9 @@ static void GEX_LL_Query(GexUnit *unit, uint8_t cmd, uint8_t *payload, uint32_t 
 /** Send with no listener, don't wait for response */
 void GEX_Send(GexUnit *unit, uint8_t cmd, uint8_t *payload, uint32_t len)
 {
+    assert(unit != NULL);
+    assert(unit->gex != NULL);
+
     GEX_LL_Query(unit, cmd, payload, len, NULL, NULL);
 }
 
@@ -55,6 +63,8 @@ void GEX_Send(GexUnit *unit, uint8_t cmd, uint8_t *payload, uint32_t len)
 static TF_Result sync_query_lst(TinyFrame *tf, TF_Msg *msg)
 {
     GexClient *gex = tf->userdata;
+    assert(gex != NULL);
+
     // clone the message
     gex->sync_query_response.len = msg->len;
     gex->sync_query_response.session = msg->frame_id;
@@ -70,7 +80,11 @@ static TF_Result sync_query_lst(TinyFrame *tf, TF_Msg *msg)
 /** Static query */
 GexMsg GEX_Query(GexUnit *unit, uint8_t cmd, uint8_t *payload, uint32_t len)
 {
+    assert(unit != NULL);
+    assert(unit->gex != NULL);
+
     GexClient *gex = unit->gex;
+
     gex->sync_query_ok = false;
 
     // Default response that will be used if nothing is received
@@ -113,6 +127,9 @@ static TF_Result async_query_lst(TinyFrame *tf, TF_Msg *msg)
 /** Sync query, without poll */
 void GEX_QueryAsync(GexUnit *unit, uint8_t cmd, uint8_t *payload, uint32_t len, GexEventListener lst)
 {
+    assert(unit != NULL);
+    assert(unit->gex != NULL);
+
     GexClient *gex = unit->gex;
     gex->sync_query_ok = false;
     memset(&gex->sync_query_response, 0, sizeof(GexMsg));

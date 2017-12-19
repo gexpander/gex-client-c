@@ -5,6 +5,10 @@
 #ifndef GEX_CLIENT_GEX_CLIENT_H
 #define GEX_CLIENT_GEX_CLIENT_H
 
+#ifndef GEX_H
+#error "Include gex.h instead!"
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -21,6 +25,14 @@
  * @param lst - the listener
  */
 void GEX_OnReport(GexClient *gex, GexUnit *unit, GexEventListener lst);
+
+/**
+ * Get a unit, or NULL
+ *
+ * @param gex - gex
+ * @param name - unit name
+ */
+GexUnit *GEX_Unit(GexClient *gex, const char *name);
 
 /**
  * Initialize the GEX client

@@ -24,7 +24,7 @@ set(SOURCE_FILES
         gex/protocol/TinyFrame.c
         gex/protocol/TinyFrame.h
         gex/utils/type_coerce.h
-        gex/gex_defines.h gex/gex_unit.c gex/gex_unit.h)
+        gex/gex_defines.h gex/gex_unit.c gex/gex_unit.h gex/gex.h)
 
 include_directories(
         gex

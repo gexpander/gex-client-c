@@ -10,6 +10,7 @@
 #include <errno.h>
 #include "TinyFrame.h"
 
+#define GEX_H // to allow including other headers
 #include "gex_client.h"
 #include "serial.h"
 #include "gex_internal.h"
@@ -53,7 +54,7 @@ static TF_Result unit_report_lst(TinyFrame *tf, TF_Msg *msg)
         .payload = (uint8_t *) (msg->data + 2),
         .len = (uint32_t) (msg->len - 2),
         .type = rpt_type,
-        .unit = (lu == NULL) ? fbu : lu,
+        .unit = (lu == NULL) ? &fbu : lu,
     };
 
     if (lu && lu->report_handler) {
@@ -85,9 +86,10 @@ static TF_Result list_units_lst(TinyFrame *tf, TF_Msg *msg)
         // append
         struct gex_unit *lu = malloc(sizeof(struct gex_unit));
         lu->next = NULL;
-        lu->type = "UNKNOWN";
+        lu->type = strdup("UNKNOWN"); // TODO
         lu->name = strdup(buf);
         lu->callsign = callsign;
+        lu->gex = gex;
         lu->report_handler = NULL;
         if (tail == NULL) {
             gex->ulu_head = lu;
@@ -111,6 +113,12 @@ void GEX_OnReport(GexClient *gex, GexUnit *unit, GexEventListener lst)
     }
 }
 
+/** Find a unit */
+GexUnit *GEX_Unit(GexClient *gex, const char *name)
+{
+    return gex_find_unit_by_name(gex, name);
+}
+
 /** Create a instance and connect */
 GexClient *GEX_Init(const char *device, int timeout_ms)
 {
@@ -125,6 +133,7 @@ GexClient *GEX_Init(const char *device, int timeout_ms)
     gex->acm_fd = serial_open(device, false, (timeout_ms + 50) / 100);
     if (gex->acm_fd == -1) {
         free(gex);
+        fprintf(stderr, "FAILED TO CONNECT TO %s!\n", device);
         return NULL;
     }
 
@@ -172,7 +181,7 @@ void GEX_Poll(GexClient *gex)
 void GEX_DeInit(GexClient *gex)
 {
     if (gex == NULL) return;
-    close(gex->acm_fd);
+    fsync(gex->acm_fd);
     gex_destroy_unit_lookup(gex);
     TF_DeInit(gex->tf);
     free(gex);

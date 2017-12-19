@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "gex_client.h"
 #include <signal.h>
+#include <assert.h>
+
+#include "gex.h"
 
 static GexClient *gex;
 
@@ -14,18 +16,20 @@ static void sigintHandler(int sig)
     exit(0);
 }
 
+#define LED_CMD_TOGGLE 0x02
+
 int main()
 {
     // Bind ^C handler for safe shutdown
     signal(SIGINT, sigintHandler);
 
 	gex = GEX_Init("/dev/ttyACM0", 200);
-	if (!gex) {
-		fprintf(stderr, "FAILED TO CONNECT, ABORTING!\n");
-		exit(1);
-	}
+	if (!gex) exit(1);
 
-	printf("Hello, World!\n");
+    GexUnit *led = GEX_Unit(gex, "LED");
+    assert(led != NULL);
+
+    GEX_Send(led, LED_CMD_TOGGLE, NULL, 0);
 
 	GEX_DeInit(gex);
 	return 0;

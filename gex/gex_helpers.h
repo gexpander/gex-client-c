@@ -5,6 +5,10 @@
 #ifndef GEX_CLIENT_GEX_HELPERS_H
 #define GEX_CLIENT_GEX_HELPERS_H
 
+#ifndef GEX_H
+#error "Include gex.h instead!"
+#endif
+
 #include "gex_internal.h"
 #include "gex_defines.h"
 

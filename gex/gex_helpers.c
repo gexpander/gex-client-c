@@ -3,17 +3,23 @@
 //
 
 #include <malloc.h>
+#include <assert.h>
 
+#define GEX_H // to allow including other headers
 #include "gex_defines.h"
 #include "gex_helpers.h"
 
 /** Delete recursively all GEX callsign look-up table entries */
 void gex_destroy_unit_lookup(GexClient *gex)
 {
+    assert(gex != NULL);
+
     struct gex_unit *next = gex->ulu_head;
     while (next != NULL) {
         struct gex_unit *cur = next;
         next = next->next;
+        free(cur->name);
+        free(cur->type);
         free(cur);
     }
     gex->ulu_head = NULL;
@@ -22,6 +28,8 @@ void gex_destroy_unit_lookup(GexClient *gex)
 /** Get lookup entry for unit name */
 struct gex_unit *gex_find_unit_by_callsign(GexClient *gex, uint8_t callsign)
 {
+    assert(gex != NULL);
+
     struct gex_unit *next = gex->ulu_head;
     while (next != NULL) {
         if (next->callsign == callsign) {
@@ -35,6 +43,9 @@ struct gex_unit *gex_find_unit_by_callsign(GexClient *gex, uint8_t callsign)
 /** Get lookup entry for unit name */
 struct gex_unit *gex_find_unit_by_name(GexClient *gex, const char *name)
 {
+    assert(gex != NULL);
+    assert(name != NULL);
+
     struct gex_unit *next = gex->ulu_head;
     while (next != NULL) {
         if (strcmp(next->name, name) == 0) {
@@ -48,6 +59,8 @@ struct gex_unit *gex_find_unit_by_name(GexClient *gex, const char *name)
 /** Get callsign for unit name */
 uint8_t gex_find_callsign_by_name(GexClient *gex, const char *name)
 {
+    assert(gex != NULL);
+
     struct gex_unit *lu = gex_find_unit_by_name(gex, name);
     return (uint8_t) ((lu == NULL) ? 0 : lu->callsign);
 }

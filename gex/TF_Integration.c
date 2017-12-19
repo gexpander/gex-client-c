@@ -5,6 +5,8 @@
 #include <errno.h>
 
 #include "TinyFrame.h"
+
+#define GEX_H // to allow including other headers
 #include "gex_internal.h"
 
 void TF_WriteImpl(TinyFrame *tf, const uint8_t *buff, size_t len)
