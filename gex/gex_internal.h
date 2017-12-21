@@ -21,6 +21,7 @@ struct gex_client {
     const char *acm_device; //!< Comport device name, might be used to reconnect (?)
     int acm_fd;             //!< Open comport file descriptor
     bool connected;         //!< Flag that we're currently connected to the comport
+    uint32_t ser_timeout;   //!< Timeout for read()/write()
 
     // synchronous query "hacks"
     bool squery_ok;         //!< flag that the query response was received

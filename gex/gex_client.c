@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <utils/hexdump.h>
 #include "TinyFrame.h"
 
 #define GEX_H // to allow including other headers
@@ -138,7 +139,8 @@ GexClient *GEX_Init(const char *device, int timeout_ms)
 
     // --- Open the device ---
     gex->acm_device = device;
-    gex->acm_fd = serial_open(device, false, (timeout_ms + 50) / 100);
+    gex->ser_timeout = timeout_ms;
+    gex->acm_fd = serial_open(device);
     if (gex->acm_fd == -1) {
         free(gex);
         fprintf(stderr, "FAILED TO CONNECT TO %s!\n", device);
@@ -177,12 +179,33 @@ void GEX_Poll(GexClient *gex)
 
     assert(gex != NULL);
 
-    ssize_t len = read(gex->acm_fd, pollbuffer, TF_MAX_PAYLOAD_RX); // TODO wait only for expect amount?
-    if (len < 0) {
-        fprintf(stderr, "ERROR %d in GEX Poll: %s\n", errno, strerror(errno));
-    } else {
-        TF_Accept(gex->tf, pollbuffer, (size_t) len);
-    }
+    bool first = true;
+
+    do {
+        if (first) serial_shouldwait(gex->acm_fd, gex->ser_timeout);
+        ssize_t len = read(gex->acm_fd, pollbuffer, TF_MAX_PAYLOAD_RX);
+        if (first) {
+            serial_noblock(gex->acm_fd);
+            first = false;
+        }
+
+        if (len < 0) {
+            fprintf(stderr, "ERROR %d in GEX Poll: %s\n", errno, strerror(errno));
+            break;
+        }
+        else {
+            if (len == 0) {
+                fprintf(stderr,"No more data to read.\n");
+                break;
+            }
+            else {
+                fprintf(stderr, "rx %d bytes\n", (int) len);
+                hexDump("TF_Receive", pollbuffer, (uint32_t) len);
+
+                TF_Accept(gex->tf, pollbuffer, (size_t) len);
+            }
+        }
+    } while(1);
 }
 
 /** Free the struct */

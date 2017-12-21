@@ -27,8 +27,8 @@ static int set_interface_attribs(int fd, int speed, int parity)
 	tty.c_lflag = 0;                // no signaling chars, no echo,
 	// no canonical processing
 	tty.c_oflag = 0;                // no remapping, no delays
-	tty.c_cc[VMIN] = 0;            // read doesn't block
-	tty.c_cc[VTIME] = 5;            // 0.5 seconds read timeout
+	tty.c_cc[VMIN] = 0;             // read doesn't block
+	tty.c_cc[VTIME] = 2;            // 0.2 seconds read timeout
 
 	tty.c_iflag &= ~(IXON | IXOFF | IXANY); // shut off xon/xoff ctrl
 
@@ -46,23 +46,8 @@ static int set_interface_attribs(int fd, int speed, int parity)
 	return 0;
 }
 
-static void set_blocking(int fd, bool should_block, int read_timeout_0s1)
-{
-	struct termios tty;
-	memset(&tty, 0, sizeof tty);
-	if (tcgetattr(fd, &tty) != 0) {
-		fprintf(stderr, "error %d from tggetattr\n", errno);
-		return;
-	}
 
-	tty.c_cc[VMIN] = (cc_t) (should_block ? 1 : 0);
-	tty.c_cc[VTIME] = (cc_t) read_timeout_0s1;
-
-	if (tcsetattr(fd, TCSANOW, &tty) != 0)
-		fprintf(stderr, "error %d setting term attributes\n", errno);
-}
-
-int serial_open(const char *device, bool blocking, int timeout_0s1)
+int serial_open(const char *device)
 {
 	int fd = open (device, O_RDWR | O_NOCTTY | O_SYNC);
 	if (fd < 0) {
@@ -71,7 +56,38 @@ int serial_open(const char *device, bool blocking, int timeout_0s1)
 	}
 
 	set_interface_attribs(fd, B115200, 0);
-	set_blocking (fd, blocking, timeout_0s1);
 
 	return fd;
+}
+
+void serial_noblock(int fd)
+{
+	struct termios tty;
+	memset(&tty, 0, sizeof tty);
+	if (tcgetattr(fd, &tty) != 0) {
+		fprintf(stderr, "error %d from tggetattr\n", errno);
+		return;
+	}
+
+	tty.c_cc[VMIN] = (cc_t) 0;
+	tty.c_cc[VTIME] = (cc_t) 0;
+
+	if (tcsetattr(fd, TCSANOW, &tty) != 0)
+		fprintf(stderr, "error %d setting term attributes\n", errno);
+}
+
+void serial_shouldwait(int fd, int ms)
+{
+	struct termios tty;
+	memset(&tty, 0, sizeof tty);
+	if (tcgetattr(fd, &tty) != 0) {
+		fprintf(stderr, "error %d from tggetattr\n", errno);
+		return;
+	}
+
+	tty.c_cc[VMIN] = (cc_t) 0;
+	tty.c_cc[VTIME] = (cc_t) (ms+50/100);
+
+	if (tcsetattr(fd, TCSANOW, &tty) != 0)
+		fprintf(stderr, "error %d setting term attributes\n", errno);
 }

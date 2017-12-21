@@ -34,7 +34,7 @@ int main(void)
     // Bind ^C handler for safe shutdown
     signal(SIGINT, sigintHandler);
 
-	gex = GEX_Init("/dev/ttyACM0", 200);
+	gex = GEX_Init("/dev/ttyACM0", 100);
 	if (!gex) exit(1);
 
     TF_AddGenericListener(GEX_GetTF(gex), hdl_default);
@@ -67,7 +67,7 @@ int main(void)
     };
     uint32_t actuallyRead = GEX_BulkRead(test, &br);
     fprintf(stderr, "Read %d bytes:\n", actuallyRead);
-    fprintf(stderr, "%*.s", actuallyRead, buffr);
+    fprintf(stderr, "%.*s", actuallyRead, buffr);
 
     fprintf(stderr, "ALL OK, ending.\n");
 	GEX_DeInit(gex);
