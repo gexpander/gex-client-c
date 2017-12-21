@@ -4,8 +4,8 @@
 
 #include <malloc.h>
 #include <assert.h>
-#include <utils/payload_parser.h>
-#include <utils/payload_builder.h>
+#include "utils/payload_parser.h"
+#include "utils/payload_builder.h"
 
 #define GEX_H // to allow including other headers
 #include "gex_defines.h"
@@ -33,7 +33,7 @@ static void GEX_LL_Query(GexUnit *unit, uint8_t cmd,
     assert(unit != NULL);
     assert(unit->gex != NULL);
 
-    fprintf(stderr, "raw pld? %d\n", raw_pld);
+//    fprintf(stderr, "raw pld? %d\n", raw_pld);
 
     GexClient *gex = unit->gex;
 
@@ -100,7 +100,7 @@ static TF_Result sync_query_lst(TinyFrame *tf, TF_Msg *msg)
     GexClient *gex = tf->userdata;
     assert(gex != NULL);
 
-    fprintf(stderr, "sync query lst called <-\n");
+//    fprintf(stderr, "sync query lst called <-\n");
 
     // clone the message
     gex->squery_msg.len = msg->len;
@@ -201,7 +201,7 @@ void GEX_QueryAsync(GexUnit *unit, uint8_t cmd, const uint8_t *payload, uint32_t
  */
 uint32_t GEX_BulkRead(GexUnit *unit, GexBulk *bulk)
 {
-    fprintf(stderr, "Ask to read:\n");
+//    fprintf(stderr, "Ask to read:\n");
     // We ask for the transfer. This is unit specific and can contain information that determines the transferred data
     GexMsg resp0 = GEX_Query(unit, bulk->req_cmd, bulk->req_data, bulk->req_len);
 
@@ -215,7 +215,7 @@ uint32_t GEX_BulkRead(GexUnit *unit, GexBulk *bulk)
         return 0;
     }
 
-    fprintf(stderr, "BR, got offer!\n");
+//    fprintf(stderr, "BR, got offer!\n");
 
     // Check how much data is available
     PayloadParser pp = pp_start(resp0.payload, resp0.len, NULL);
@@ -223,20 +223,20 @@ uint32_t GEX_BulkRead(GexUnit *unit, GexBulk *bulk)
     assert(pp.ok);
 
     total = MIN(total, bulk->capacity); // clamp...
-    fprintf(stderr, "Total is %d\n", total);
+//    fprintf(stderr, "Total is %d\n", total);
 
     uint32_t at = 0;
     while (at < total+1) { // +1 makes sure we read one past end and trigger the END OF DATA msg
         uint8_t buf[10];
         PayloadBuilder pb = pb_start(buf, 10, NULL);
-        pb_u32(&pb, 128); // This selects the chunk size.
+        pb_u32(&pb, 120); // This selects the chunk size.
         // FIXME Something is wrong in the poll function, or the transport in general,
-        // because chunks larger than e.g. 130 bytes seem to get stuck half-transferred.
+        // because chunks larger than e.g. 128 bytes seem to get stuck half-transferred.
         // This isn't an issue for events and regular sending, only query responses like here.
         // This may also cause problems when receiving events while reading a bulk.
         // It may be best to get rid of the comport and use libusb, after all.
 
-        fprintf(stderr, "Poll read:\n");
+//        fprintf(stderr, "Poll read:\n");
         GexMsg resp = GEX_QueryEx(unit, MSG_BULK_READ_POLL, buf,
                                   (uint32_t) pb_length(&pb), resp0.session, true, true);
 
@@ -301,7 +301,7 @@ bool GEX_BulkWrite(GexUnit *unit, GexBulk *bulk)
     uint32_t at = 0;
     while (at < bulk->len) {
         uint32_t chunk = MIN(max_chunk, bulk->len - at);
-        fprintf(stderr, "Query at %d, len %d\n", (int)at, (int)chunk);
+//        fprintf(stderr, "Query at %d, len %d\n", (int)at, (int)chunk);
         GexMsg resp = GEX_QueryEx(unit, MSG_BULK_DATA, bulk->buffer + at, chunk,
                                   resp0.session, true, true);
         at += chunk;

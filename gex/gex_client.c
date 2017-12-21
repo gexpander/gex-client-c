@@ -195,12 +195,12 @@ void GEX_Poll(GexClient *gex)
         }
         else {
             if (len == 0) {
-                fprintf(stderr,"No more data to read.\n");
+//                fprintf(stderr,"No more data to read.\n");
                 break;
             }
             else {
-                fprintf(stderr, "rx %d bytes\n", (int) len);
-                hexDump("TF_Receive", pollbuffer, (uint32_t) len);
+//                fprintf(stderr, "rx %d bytes\n", (int) len);
+//                hexDump("TF_Receive", pollbuffer, (uint32_t) len);
 
                 TF_Accept(gex->tf, pollbuffer, (size_t) len);
             }

@@ -15,7 +15,7 @@ void TF_WriteImpl(TinyFrame *tf, const uint8_t *buff, size_t len)
     GexClient *gc = tf->userdata;
 	assert(gc->acm_fd != 0);
 
-    hexDump("TF_Write", buff, (uint32_t)len);
+//    hexDump("TF_Write", buff, (uint32_t)len);
 
 	ssize_t rv = write(gc->acm_fd, buff, len);
 	if (rv != (ssize_t)len) {
