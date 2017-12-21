@@ -27,6 +27,12 @@ static inline void GEX_Send0(GexUnit *unit, uint8_t cmd)
 /** Static query, send a command and wait for the response */
 GexMsg GEX_Query(GexUnit *unit, uint8_t cmd, const uint8_t *payload, uint32_t len);
 
+/** Send a query with no payload */
+static inline GexMsg GEX_Query0(GexUnit *unit, uint8_t cmd)
+{
+	return GEX_Query(unit, cmd, NULL, 0);
+}
+
 /** Asynchronous query with an async listener */
 void GEX_QueryAsync(GexUnit *unit, uint8_t cmd, const uint8_t *payload, uint32_t len, GexEventListener lst);
 

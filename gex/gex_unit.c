@@ -134,7 +134,7 @@ static GexMsg GEX_QueryEx(GexUnit *unit, uint8_t cmd,
     GEX_Poll(gex);
 
     if (!gex->squery_ok) {
-        fprintf(stderr, "No response to query of unit %s!", unit->name);
+        fprintf(stderr, "No response to query of unit %s!\n", unit->name);
     }
 
     return gex->squery_msg;
@@ -200,14 +200,16 @@ uint32_t GEX_BulkRead(GexUnit *unit, GexBulk *bulk)
     GexMsg resp0 = GEX_Query(unit, bulk->req_cmd, bulk->req_data, bulk->req_len);
 
     if (resp0.type == MSG_ERROR) {
-        fprintf(stderr, "Bulk read rejected! %.*s", resp0.len, (char*)resp0.payload);
+        fprintf(stderr, "Bulk read rejected! %.*s\n", resp0.len, (char*)resp0.payload);
         return 0;
     }
 
     if (resp0.type != MSG_BULK_READ_OFFER) {
-        fprintf(stderr, "Bulk read failed, response not BULK_READ_OFFER!");
+        fprintf(stderr, "Bulk read failed, response not BULK_READ_OFFER!\n");
         return 0;
     }
+
+    fprintf(stderr, "BR, got offer!\n");
 
     // Check how much data is available
     PayloadParser pp = pp_start(resp0.payload, resp0.len, NULL);
@@ -215,15 +217,20 @@ uint32_t GEX_BulkRead(GexUnit *unit, GexBulk *bulk)
     assert(pp.ok);
 
     total = MIN(total, bulk->capacity); // clamp...
+    fprintf(stderr, "Total is %d\n", total);
 
     uint32_t at = 0;
     while (at < total) {
+        uint8_t buf[10];
+        PayloadBuilder pb = pb_start(buf, 10, NULL);
+        pb_u32(&pb, 512);
+
         GexMsg resp = GEX_QueryEx(unit, MSG_BULK_READ_POLL,
-                                  NULL, 0,
+                                  buf, (uint32_t) pb_length(&pb),
                                   resp0.session, true);
 
         if (resp.type == MSG_ERROR) {
-            fprintf(stderr, "Bulk read failed! %.*s", resp.len, (char *) resp.payload);
+            fprintf(stderr, "Bulk read failed! %.*s\n", resp.len, (char *) resp.payload);
             return 0;
         }
 
@@ -236,7 +243,7 @@ uint32_t GEX_BulkRead(GexUnit *unit, GexBulk *bulk)
             memcpy(bulk->buffer+at, resp.payload, resp.len);
             at += resp.len;
         } else {
-            fprintf(stderr, "Bulk read failed! Bad response type.");
+            fprintf(stderr, "Bulk read failed! Bad response type.\n");
             return 0;
         }
     }
@@ -258,12 +265,12 @@ bool GEX_BulkWrite(GexUnit *unit, GexBulk *bulk)
     GexMsg resp0 = GEX_Query(unit, bulk->req_cmd, bulk->req_data, bulk->req_len);
 
     if (resp0.type == MSG_ERROR) {
-        fprintf(stderr, "Bulk write rejected! %.*s", resp0.len, (char*)resp0.payload);
+        fprintf(stderr, "Bulk write rejected! %.*s\n", resp0.len, (char*)resp0.payload);
         return false;
     }
 
     if (resp0.type != MSG_BULK_WRITE_OFFER) {
-        fprintf(stderr, "Bulk write failed, response not MSG_BULK_WRITE_OFFER!");
+        fprintf(stderr, "Bulk write failed, response not MSG_BULK_WRITE_OFFER!\n");
         return false;
     }
 
@@ -273,7 +280,7 @@ bool GEX_BulkWrite(GexUnit *unit, GexBulk *bulk)
     assert(pp.ok);
 
     if (max_size < bulk->len) {
-        fprintf(stderr, "Write not possible, not enough space.");
+        fprintf(stderr, "Write not possible, not enough space.\n");
         // Inform GEX we're not going to do it
         GEX_SendEx(unit, MSG_BULK_ABORT, NULL, 0, resp0.session, true);
         return false;
@@ -288,12 +295,12 @@ bool GEX_BulkWrite(GexUnit *unit, GexBulk *bulk)
         at += chunk;
 
         if (resp.type == MSG_ERROR) {
-            fprintf(stderr, "Bulk write failed! %.*s", resp.len, (char *) resp.payload);
+            fprintf(stderr, "Bulk write failed! %.*s\n", resp.len, (char *) resp.payload);
             return false;
         }
 
         if (resp.type != MSG_SUCCESS) {
-            fprintf(stderr, "Bulk write failed! Bad response type.");
+            fprintf(stderr, "Bulk write failed! Bad response type.\n");
             return false;
         }
     }

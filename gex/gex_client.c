@@ -112,10 +112,19 @@ void GEX_OnReport(GexClient *gex, GexUnit *unit, GexEventListener lst)
     }
 }
 
+TinyFrame *GEX_GetTF(GexClient *gex)
+{
+    return gex->tf;
+}
+
 /** Find a unit */
 GexUnit *GEX_Unit(GexClient *gex, const char *name)
 {
-    return gex_find_unit_by_name(gex, name);
+    GexUnit *u = gex_find_unit_by_name(gex, name);
+    if (u == NULL) {
+        fprintf(stderr, "!! Unit %s not found!\n", name);
+    }
+    return u;
 }
 
 /** Create a instance and connect */

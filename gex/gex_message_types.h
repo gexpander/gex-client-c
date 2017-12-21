@@ -19,7 +19,7 @@ enum TF_Types_ {
     MSG_ERROR    = 0x02, //!< Generic failure response (when a request fails to execute)
 
     MSG_BULK_READ_OFFER = 0x03, //!< Offer of data to read. Payload: u32 total len
-    MSG_BULK_READ_POLL = 0x04, //!< Request to read a previously announced chunk.
+    MSG_BULK_READ_POLL = 0x04, //!< Request to read a previously announced chunk. Payload: u32 max chunk
     MSG_BULK_WRITE_OFFER = 0x05, //!< Offer to receive data in a write transaction. Payload: u32 max size, u32 max chunk
     MSG_BULK_DATA = 0x06, //!< Writing a chunk, or sending a chunk to master.
     MSG_BULK_END = 0x07, //!< Bulk transfer is done, no more data to read or write.

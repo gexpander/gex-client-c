@@ -8,6 +8,7 @@
 #define GEX_H // to allow including other headers
 #include "gex_defines.h"
 #include "gex_helpers.h"
+#include "gex_internal.h"
 
 /** Delete recursively all GEX callsign look-up table entries */
 void gex_destroy_unit_lookup(GexClient *gex)

@@ -26,6 +26,8 @@
  */
 void GEX_OnReport(GexClient *gex, GexUnit *unit, GexEventListener lst);
 
+TinyFrame *GEX_GetTF(GexClient *gex);
+
 /**
  * Get a unit, or NULL
  *
