@@ -54,4 +54,17 @@ uint32_t GEX_BulkRead(GexUnit *unit, GexBulk *bulk);
  */
 bool GEX_BulkWrite(GexUnit *unit, GexBulk *bulk);
 
+
+// extended low level stuff
+
+/** Static query */
+GexMsg GEX_QueryEx(GexUnit *unit, uint8_t cmd,
+				   const uint8_t *payload, uint32_t len,
+				   GexSession session, bool is_reply,
+				   bool raw_pld);
+
+void GEX_SendEx(GexUnit *unit, uint8_t cmd,
+				const uint8_t *payload, uint32_t len,
+				GexSession session, bool is_reply);
+
 #endif //GEX_CLIENT_GEX_UNIT_H

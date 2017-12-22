@@ -34,7 +34,7 @@ int main(void)
     // Bind ^C handler for safe shutdown
     signal(SIGINT, sigintHandler);
 
-	gex = GEX_Init("/dev/ttyACM0", 100);
+	gex = GEX_Init("/dev/ttyACM0", 200);
 	if (!gex) exit(1);
 
     TF_AddGenericListener(GEX_GetTF(gex), hdl_default);
