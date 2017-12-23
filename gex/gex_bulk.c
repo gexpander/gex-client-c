@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include "utils/hexdump.h"
 #include "utils/payload_parser.h"
 #include "utils/payload_builder.h"
 
@@ -49,7 +50,7 @@ uint32_t GEX_BulkRead(GexUnit *unit, GexBulk *bulk)
     while (at < total+1) { // +1 makes sure we read one past end and trigger the END OF DATA msg
         uint8_t buf[10];
         PayloadBuilder pb = pb_start(buf, 10, NULL);
-        pb_u32(&pb, 120); // This selects the chunk size.
+        pb_u32(&pb, TF_MAX_PAYLOAD_RX); // This selects the chunk size.
         // FIXME Something is wrong in the poll function, or the transport in general,
         // because chunks larger than e.g. 128 bytes seem to get stuck half-transferred.
         // This isn't an issue for events and regular sending, only query responses like here.
@@ -67,11 +68,12 @@ uint32_t GEX_BulkRead(GexUnit *unit, GexBulk *bulk)
 
         if (resp.type == MSG_BULK_END) {
             // No more data
-            fprintf(stderr, "Bulk read OK, closed.\n");
+//            fprintf(stderr, "Bulk read OK, closed.\n");
             return at;
         }
 
         if (resp.type == MSG_BULK_DATA) {
+//            hexDump("Rx chunk", resp.payload, resp.len);
             memcpy(bulk->buffer+at, resp.payload, resp.len);
             at += resp.len;
         } else {
