@@ -58,7 +58,7 @@ int main(void)
         msg = GEX_Query0(test, 0);
         assert(msg.type == MSG_SUCCESS);
         fprintf(stderr, "\"PING\" cmd: OK.\n");
-        usleep(50000);
+        //usleep(20000);
     }
 #endif
 

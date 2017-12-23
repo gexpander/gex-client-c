@@ -57,9 +57,9 @@ typedef uint8_t TF_COUNT;
 // --- Listener counts - determine sizes of the static slot tables ---
 
 // Frame ID listeners (wait for response / multi-part message)
-#define TF_MAX_ID_LST   10
+#define TF_MAX_ID_LST   5
 // Frame Type listeners (wait for frame with a specific first payload byte)
-#define TF_MAX_TYPE_LST 10
+#define TF_MAX_TYPE_LST 5
 // Generic listeners (fallback if no other listener catches it)
 #define TF_MAX_GEN_LST  1
 
