@@ -66,16 +66,15 @@ uint32_t GEX_BulkRead(GexUnit *unit, GexBulk *bulk)
             return 0;
         }
 
-        if (resp.type == MSG_BULK_END) {
-            // No more data
-//            fprintf(stderr, "Bulk read OK, closed.\n");
-            return at;
-        }
-
-        if (resp.type == MSG_BULK_DATA) {
+        if (resp.type == MSG_BULK_DATA || resp.type == MSG_BULK_END) {
 //            hexDump("Rx chunk", resp.payload, resp.len);
             memcpy(bulk->buffer+at, resp.payload, resp.len);
             at += resp.len;
+
+            // quit if we're done
+            if (resp.type == MSG_BULK_END) {
+                return at;
+            }
         } else {
             fprintf(stderr, "Bulk read failed! Bad response type.\n");
             return 0;

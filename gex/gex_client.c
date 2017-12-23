@@ -76,17 +76,19 @@ static TF_Result list_units_lst(TinyFrame *tf, TF_Msg *msg)
 
     PayloadParser pp = pp_start((uint8_t*)msg->data, msg->len, NULL);
     uint8_t count = pp_u8(&pp);
-    char buf[100];
+    char buf[20];
+    char buf2[20];
     struct gex_unit *tail = NULL;
     for(int i = 0; i < count; i++) {
         uint8_t callsign = pp_u8(&pp);
-        pp_string(&pp, buf, 100);
-        fprintf(stderr, "- Found unit \"%s\" @ callsign %d\n", buf, callsign);
+        pp_string(&pp, buf, 20);
+        pp_string(&pp, buf2, 20);
+        fprintf(stderr, "- Found unit \"%s\" (type %s) @ callsign %d\n", buf, buf2, callsign);
 
         // append
         struct gex_unit *lu = malloc(sizeof(struct gex_unit));
         lu->next = NULL;
-        lu->type = strdup("UNKNOWN"); // TODO
+        lu->type = strdup(buf2);
         lu->name = strdup(buf);
         lu->callsign = callsign;
         lu->gex = gex;
