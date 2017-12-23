@@ -175,7 +175,7 @@ GexClient *GEX_Init(const char *device, int timeout_ms)
 /** Try to read from the serial port and process any received bytes with TF */
 void GEX_Poll(GexClient *gex)
 {
-    uint8_t pollbuffer[TF_MAX_PAYLOAD_RX];
+    static uint8_t pollbuffer[TF_MAX_PAYLOAD_RX];
 
     assert(gex != NULL);
 
