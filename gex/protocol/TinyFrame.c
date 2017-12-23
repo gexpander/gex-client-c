@@ -1,8 +1,6 @@
 //---------------------------------------------------------------------------
 #include "TinyFrame.h"
 #include <malloc.h>
-#include <stdio.h>
-#include <stdlib.h>
 //---------------------------------------------------------------------------
 
 // Compatibility with ESP8266 SDK
@@ -245,7 +243,6 @@ bool _TF_FN TF_AddIdListener(TinyFrame *tf, TF_Msg *msg, TF_Listener cb, TF_TICK
             return true;
         }
     }
-    fprintf(stderr,"TF failed to add ID listener\n");
     return false;
 }
 
@@ -375,8 +372,7 @@ static void _TF_FN TF_HandleReceivedMessage(TinyFrame *tf)
                 if (res == TF_RENEW) {
                     renew_id_listener(ilst);
                 }
-
-                if (res == TF_CLOSE) {
+                else if (res == TF_CLOSE) {
                     // Set userdata to NULL to avoid calling user for cleanup
                     ilst->userdata = NULL;
                     ilst->userdata2 = NULL;
@@ -485,10 +481,11 @@ void _TF_FN TF_AcceptChar(TinyFrame *tf, unsigned char c)
 
 #if !TF_USE_SOF_BYTE
     if (tf->state == TFState_SOF) {
-            TF_ParsBeginFrame();
-        }
+        TF_ParsBeginFrame();
+    }
 #endif
 
+    //@formatter:off
     switch (tf->state) {
         case TFState_SOF:
             if (c == TF_SOF_BYTE) {
@@ -517,15 +514,15 @@ void _TF_FN TF_AcceptChar(TinyFrame *tf, unsigned char c)
         case TFState_TYPE:
             CKSUM_ADD(tf->cksum, c);
             COLLECT_NUMBER(tf->type, TF_TYPE) {
-#if TF_CKSUM_TYPE == TF_CKSUM_NONE
-                tf->state = TFState_DATA;
-                tf->rxi = 0;
-#else
-                // enter HEAD_CKSUM state
-                tf->state = TFState_HEAD_CKSUM;
-                tf->rxi = 0;
-                tf->ref_cksum = 0;
-#endif
+                #if TF_CKSUM_TYPE == TF_CKSUM_NONE
+                    tf->state = TFState_DATA;
+                    tf->rxi = 0;
+                #else
+                    // enter HEAD_CKSUM state
+                    tf->state = TFState_HEAD_CKSUM;
+                    tf->rxi = 0;
+                    tf->ref_cksum = 0;
+                #endif
             }
             break;
 
@@ -540,6 +537,7 @@ void _TF_FN TF_AcceptChar(TinyFrame *tf, unsigned char c)
                 }
 
                 if (tf->len == 0) {
+                    // if the message has no body, we're done.
                     TF_HandleReceivedMessage(tf);
                     TF_ResetParser(tf);
                     break;
@@ -567,16 +565,16 @@ void _TF_FN TF_AcceptChar(TinyFrame *tf, unsigned char c)
             }
 
             if (tf->rxi == tf->len) {
-#if TF_CKSUM_TYPE == TF_CKSUM_NONE
-                // All done
-                TF_HandleReceivedMessage();
-                TF_ResetParser();
-#else
-                // Enter DATA_CKSUM state
-                tf->state = TFState_DATA_CKSUM;
-                tf->rxi = 0;
-                tf->ref_cksum = 0;
-#endif
+                #if TF_CKSUM_TYPE == TF_CKSUM_NONE
+                    // All done
+                    TF_HandleReceivedMessage();
+                    TF_ResetParser();
+                #else
+                    // Enter DATA_CKSUM state
+                    tf->state = TFState_DATA_CKSUM;
+                    tf->rxi = 0;
+                    tf->ref_cksum = 0;
+                #endif
             }
             break;
 
@@ -592,6 +590,7 @@ void _TF_FN TF_AcceptChar(TinyFrame *tf, unsigned char c)
             }
             break;
     }
+    //@formatter:on
 
     // we get here after finishing HEAD, if no data are to be received - handle and clear
     if (tf->len == 0 && tf->state == TFState_DATA) {
@@ -775,16 +774,19 @@ static bool _TF_FN TF_SendFrame(TinyFrame *tf, TF_Msg *msg, TF_Listener listener
         }
     }
 
-    // Flush if checksum wouldn't fit in the buffer
-    if (TF_SENDBUF_LEN - len < sizeof(TF_CKSUM)) {
-        TF_WriteImpl(tf, (const uint8_t *) tf->sendbuf, len);
-        len = 0;
+    // Checksum only if message had a body
+    if (msg->len > 0) {
+        // Flush if checksum wouldn't fit in the buffer
+        if (TF_SENDBUF_LEN - len < sizeof(TF_CKSUM)) {
+            TF_WriteImpl(tf, (const uint8_t *) tf->sendbuf, len);
+            len = 0;
+        }
+
+        // Add checksum, flush what remains to be sent
+        len += TF_ComposeTail(tf->sendbuf + len, &cksum);
     }
 
-    // Add checksum, flush what remains to be sent
-    len += TF_ComposeTail(tf->sendbuf+len, &cksum);
     TF_WriteImpl(tf, (const uint8_t *) tf->sendbuf, len);
-
     TF_ReleaseTx(tf);
 
     return true;

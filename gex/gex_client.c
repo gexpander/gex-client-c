@@ -129,7 +129,7 @@ GexUnit *GEX_Unit(GexClient *gex, const char *name)
 }
 
 /** Create a instance and connect */
-GexClient *GEX_Init(const char *device, int timeout_ms)
+GexClient *GEX_Init(const char *device, uint32_t timeout_ms)
 {
     assert(device != NULL);
 

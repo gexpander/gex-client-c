@@ -43,7 +43,7 @@ GexUnit *GEX_Unit(GexClient *gex, const char *name);
  * @param timeout_ms - read timeout in ms (allowed only multiples of 100 ms, others are rounded)
  * @return an allocated client instance
  */
-GexClient *GEX_Init(const char *device, int timeout_ms);
+GexClient *GEX_Init(const char *device, uint32_t timeout_ms);
 
 /**
  * Poll for new messages
