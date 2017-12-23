@@ -51,11 +51,6 @@ uint32_t GEX_BulkRead(GexUnit *unit, GexBulk *bulk)
         uint8_t buf[10];
         PayloadBuilder pb = pb_start(buf, 10, NULL);
         pb_u32(&pb, TF_MAX_PAYLOAD_RX); // This selects the chunk size.
-        // FIXME Something is wrong in the poll function, or the transport in general,
-        // because chunks larger than e.g. 128 bytes seem to get stuck half-transferred.
-        // This isn't an issue for events and regular sending, only query responses like here.
-        // This may also cause problems when receiving events while reading a bulk.
-        // It may be best to get rid of the comport and use libusb, after all.
 
 //        fprintf(stderr, "Poll read:\n");
         GexMsg resp = GEX_QueryEx(unit, MSG_BULK_READ_POLL, buf,
@@ -94,8 +89,7 @@ uint32_t GEX_BulkRead(GexUnit *unit, GexBulk *bulk)
  */
 bool GEX_BulkWrite(GexUnit *unit, GexBulk *bulk)
 {
-    fprintf(stderr, "Asking for bulk write...\n");
-
+//    fprintf(stderr, "Asking for bulk write...\n");
 
     // We ask for the transfer. This is unit specific
     GexMsg resp0 = GEX_Query(unit, bulk->req_cmd, bulk->req_data, bulk->req_len);
@@ -115,7 +109,7 @@ bool GEX_BulkWrite(GexUnit *unit, GexBulk *bulk)
     uint32_t max_chunk = pp_u32(&pp);
     assert(pp.ok);
 
-    fprintf(stderr, "Write allowed, size %d, chunk %d\n", (int)max_size, (int)max_chunk);
+//    fprintf(stderr, "Write allowed, size %d, chunk %d\n", (int)max_size, (int)max_chunk);
 
     if (max_size < bulk->len) {
         fprintf(stderr, "Write not possible, not enough space.\n");
@@ -127,7 +121,7 @@ bool GEX_BulkWrite(GexUnit *unit, GexBulk *bulk)
     uint32_t at = 0;
     while (at < bulk->len) {
         uint32_t chunk = MIN(max_chunk, bulk->len - at);
-        fprintf(stderr, "Query at %d, len %d\n", (int)at, (int)chunk);
+//        fprintf(stderr, "Query at %d, len %d\n", (int)at, (int)chunk);
         GexMsg resp = GEX_QueryEx(unit, MSG_BULK_DATA, bulk->buffer + at, chunk,
                                   resp0.session, true, true);
         at += chunk;
