@@ -35,7 +35,7 @@ int main(void)
     // Bind ^C handler for safe shutdown
     signal(SIGINT, sigintHandler);
 
-	gex = GEX_Init("/dev/ttyACM0", 300);
+	gex = GEX_Init("/dev/ttyACM0", 100);
 	if (!gex) exit(1);
 
     TF_AddGenericListener(GEX_GetTF(gex), hdl_default);
@@ -54,18 +54,20 @@ int main(void)
 
     // It looks like the ID listeners are not being freed!
     // May be a bug both here and on the GEX side.
-    for(int i=0; i<40; i++) {
+    for(int i=0; i<30; i++) {
+        fprintf(stderr, "\n%d \"PING\"\n", i);
         msg = GEX_Query0(test, 0);
         assert(msg.type == MSG_SUCCESS);
-        fprintf(stderr, "\"PING\" cmd: OK.\n");
-        //usleep(20000);
+        fprintf(stderr, "\"PING\" OK!\n");
+        usleep(100000);
     }
 #endif
 
 #if 1
     // Test a echo command that returns back what was sent to it as useful payload
     const char *s = "I am returning this otherwise good typing paper to you because someone "
-            ;//"has printed gibberish all over it and put your name at the top.";
+            "has printed gibberish all over it and put your name at the top. Read the communist manifesto via bulk transfer. Read the communist manifesto via bulk transfer. Technology is a constand battle between manufacturers producing bigger and "
+            "more idiot-proof systems and nature producing bigger and better idiots. END";
     msg = GEX_Query(test, 1, (const uint8_t *) s, (uint32_t) strlen(s));
     fprintf(stderr, "\"ECHO\" cmd resp: %d, len %d, pld: %.*s\n", msg.type, (int) msg.len, (int) msg.len, (char *) msg.payload);
     assert(0==strncmp((char*)msg.payload, s, strlen(s)));

@@ -181,6 +181,9 @@ void GEX_Poll(GexClient *gex)
 
     bool first = true;
 
+#define MAX_RETRIES 10
+
+    int cycle = 0;
     do {
         if (first) serial_shouldwait(gex->acm_fd, gex->ser_timeout);
         ssize_t len = read(gex->acm_fd, pollbuffer, TF_MAX_PAYLOAD_RX);
@@ -195,12 +198,21 @@ void GEX_Poll(GexClient *gex)
         }
         else {
             if (len == 0) {
-//                fprintf(stderr,"No more data to read.\n");
-                break;
+                fprintf(stderr,"No more data to read.\n");
+                if (gex->tf->state != 0) {
+                    if (cycle < MAX_RETRIES) {
+                        cycle++;
+                        first=true;
+                    } else {
+                        break;
+                    }
+                } else {
+                    break;
+                }
             }
             else {
-//                fprintf(stderr, "rx %d bytes\n", (int) len);
-//                hexDump("TF_Receive", pollbuffer, (uint32_t) len);
+                fprintf(stderr, "rx %d bytes\n", (int) len);
+                hexDump("TF_Receive", pollbuffer, (uint32_t) len);
 
                 TF_Accept(gex->tf, pollbuffer, (size_t) len);
             }
