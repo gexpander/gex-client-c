@@ -50,6 +50,13 @@ int main(void)
     GexMsg msg;
 
 #if 1
+    // Simple response
+    msg = GEX_Query0(test, 0);
+    assert(msg.type == MSG_SUCCESS);
+    fprintf(stderr, "Cmd \"PING\" OK\n");
+#endif
+
+#if 1
     // Test a echo command that returns back what was sent to it as useful payload
     const char *s = "I am \r\nreturning this otherwise good typing paper to you because someone "
             "has printed gibberish all over it and put your name at the top. Read the communist manifesto via bulk transfer. Read the communist manifesto via bulk transfer. Technology is a constand battle between manufacturers producing bigger and "
@@ -60,23 +67,6 @@ int main(void)
 #endif
 
 #if 1
-    // Simple response
-    int failures = 0;
-    for(int i=0; i<20; i++) {
-        fprintf(stderr, "\nSending \"PING\" #%d\n", i);
-        msg = GEX_Query0(test, 0);
-        fprintf(stderr, "\"PING\" resp = %d\n", msg.type);
-        if (msg.type != 0) {
-            fprintf(stderr, "---------------------ERRR-------------------\n");
-            if (msg.type == 2) fprintf(stderr, "%.*s\n", msg.len, msg.payload);
-            failures++;
-        }
-        //usleep(20000);
-    }
-    fprintf(stderr, "FAILURES = %d\n", failures);
-#endif
-
-#if 0
     // Read the communist manifesto via bulk transfer
     uint8_t buffr[10000];
     GexBulk br = {
@@ -91,7 +81,7 @@ int main(void)
     fprintf(stderr, "%.*s", actuallyRead, buffr);
 #endif
 
-    fprintf(stderr, "ALL done, ending.\n");
+    fprintf(stderr, "\n\nALL done, ending.\n");
 	GEX_DeInit(gex);
 	return 0;
 }
