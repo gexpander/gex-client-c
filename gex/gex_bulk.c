@@ -94,6 +94,9 @@ uint32_t GEX_BulkRead(GexUnit *unit, GexBulk *bulk)
  */
 bool GEX_BulkWrite(GexUnit *unit, GexBulk *bulk)
 {
+    fprintf(stderr, "Asking for bulk write...\n");
+
+
     // We ask for the transfer. This is unit specific
     GexMsg resp0 = GEX_Query(unit, bulk->req_cmd, bulk->req_data, bulk->req_len);
 
@@ -112,6 +115,8 @@ bool GEX_BulkWrite(GexUnit *unit, GexBulk *bulk)
     uint32_t max_chunk = pp_u32(&pp);
     assert(pp.ok);
 
+    fprintf(stderr, "Write allowed, size %d, chunk %d\n", (int)max_size, (int)max_chunk);
+
     if (max_size < bulk->len) {
         fprintf(stderr, "Write not possible, not enough space.\n");
         // Inform GEX we're not going to do it
@@ -122,7 +127,7 @@ bool GEX_BulkWrite(GexUnit *unit, GexBulk *bulk)
     uint32_t at = 0;
     while (at < bulk->len) {
         uint32_t chunk = MIN(max_chunk, bulk->len - at);
-//        fprintf(stderr, "Query at %d, len %d\n", (int)at, (int)chunk);
+        fprintf(stderr, "Query at %d, len %d\n", (int)at, (int)chunk);
         GexMsg resp = GEX_QueryEx(unit, MSG_BULK_DATA, bulk->buffer + at, chunk,
                                   resp0.session, true, true);
         at += chunk;
