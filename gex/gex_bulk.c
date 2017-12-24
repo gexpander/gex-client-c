@@ -121,7 +121,7 @@ bool GEX_BulkWrite(GexUnit *unit, GexBulk *bulk)
     if (max_size < bulk->len) {
         fprintf(stderr, "Write not possible, not enough space.\n");
         // Inform GEX we're not going to do it
-        GEX_SendEx(unit, MSG_BULK_ABORT, NULL, 0, resp0.session, true);
+        GEX_SendEx(unit, MSG_BULK_ABORT, NULL, 0, resp0.session, true, true);
         return false;
     }
 
@@ -145,7 +145,7 @@ bool GEX_BulkWrite(GexUnit *unit, GexBulk *bulk)
     }
 
     // Conclude the transfer
-    GEX_SendEx(unit, MSG_BULK_END, NULL, 0, resp0.session, true);
+    GEX_SendEx(unit, MSG_BULK_END, NULL, 0, resp0.session, true, true);
 
     return true;
 }

@@ -86,12 +86,12 @@ void GEX_Send(GexUnit *unit, uint8_t cmd, const uint8_t *payload, uint32_t len)
 /** Send with no listener, don't wait for response */
 void GEX_SendEx(GexUnit *unit, uint8_t cmd,
                 const uint8_t *payload, uint32_t len,
-                GexSession session, bool is_reply)
+                GexSession session, bool is_reply, bool raw_pld)
 {
     assert(unit != NULL);
     assert(unit->gex != NULL);
 
-    GEX_LL_Query(unit, cmd, payload, len, session, is_reply, NULL, NULL, false);
+    GEX_LL_Query(unit, cmd, payload, len, session, is_reply, NULL, NULL, raw_pld);
 }
 
 /** listener for the synchronous query functionality */

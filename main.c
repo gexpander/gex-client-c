@@ -99,7 +99,7 @@ int main(void)
 #endif
 
 #if 1
-    // Read the communist manifesto via bulk transfer
+    // Load settings to a buffer as INI
     uint8_t inifile[10000];
     br = (GexBulk){
             .buffer = inifile,
@@ -111,6 +111,11 @@ int main(void)
     uint32_t actuallyRead = GEX_BulkRead(GEX_SystemUnit(gex), &br);
     fprintf(stderr, "Read %d bytes of INI:\n", actuallyRead);
     fprintf(stderr, "%.*s", actuallyRead, inifile);
+
+    // And send it back...
+    br.len = actuallyRead;
+    br.req_cmd = MSG_INI_WRITE;
+    GEX_BulkWrite(GEX_SystemUnit(gex), &br);
 #endif
 
 #if 0

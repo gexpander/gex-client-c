@@ -65,6 +65,7 @@ GexMsg GEX_QueryEx(GexUnit *unit, uint8_t cmd,
 
 void GEX_SendEx(GexUnit *unit, uint8_t cmd,
 				const uint8_t *payload, uint32_t len,
-				GexSession session, bool is_reply);
+				GexSession session, bool is_reply,
+				bool raw_pld);
 
 #endif //GEX_CLIENT_GEX_UNIT_H
