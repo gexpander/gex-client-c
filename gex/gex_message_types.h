@@ -31,7 +31,9 @@ enum TF_Types_ {
     MSG_UNIT_REPORT   = 0x11, //!< Spontaneous report from a unit
 
     // System messages
-    MSG_LIST_UNITS    = 0x20, //!< Get all unit call-signs and names
+    MSG_LIST_UNITS = 0x20, //!< Get all unit call-signs and names
+    MSG_INI_READ = 0x21,   //!< Read the ini file via bulk
+    MSG_INI_WRITE = 0x22,  //!< Write the ini file via bulk
 };
 
 #endif //GEX_CLIENT_GEX_MESSAGE_TYPES_H

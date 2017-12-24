@@ -18,7 +18,7 @@
  * Low level query
  *
  * @param unit - GEX unit to address. The unit is available in userdata1 of the response message, if any
- * @param cmd - command byte
+ * @param cmd - command byte, or TYPE if raw query is used
  * @param payload - payload buffer
  * @param len - payload length
  * @param lst - TF listener to handle the response, can be NULL

@@ -16,7 +16,7 @@
 /**
  * Bulk read from a unit, synchronous
  *
- * @param unit - the unit to target
+ * @param unit - the unit to target. If system_unit is used, a raw query will be sent (no unit preamble and cmd is TYPE)
  * @param bulk - the bulk transport info struct
  * @return actual number of bytes received.
  */
@@ -24,7 +24,10 @@ uint32_t GEX_BulkRead(GexUnit *unit, GexBulk *bulk)
 {
 //    fprintf(stderr, "Ask to read:\n");
     // We ask for the transfer. This is unit specific and can contain information that determines the transferred data
-    GexMsg resp0 = GEX_Query(unit, bulk->req_cmd, bulk->req_data, bulk->req_len);
+
+    // if unit callsign is 0, it's the system unit and we'll use raw query without the unit prefix
+    GexMsg resp0 = GEX_QueryEx(unit, bulk->req_cmd, bulk->req_data, bulk->req_len, 0, false, unit->callsign == 0);
+    //        GEX_Query(unit, bulk->req_cmd, bulk->req_data, bulk->req_len);
 
     if (resp0.type == MSG_ERROR) {
         fprintf(stderr, "Bulk read rejected! %.*s\n", resp0.len, (char*)resp0.payload);
@@ -83,7 +86,7 @@ uint32_t GEX_BulkRead(GexUnit *unit, GexBulk *bulk)
 /**
  * Bulk write to a unit, synchronous
  *
- * @param unit - the unit to target
+ * @param unit - the unit to target. If system_unit is used, raw query with cmd as TYPE will be sent.
  * @param bulk - the bulk transport info struct
  * @return true on success
  */
@@ -92,7 +95,11 @@ bool GEX_BulkWrite(GexUnit *unit, GexBulk *bulk)
 //    fprintf(stderr, "Asking for bulk write...\n");
 
     // We ask for the transfer. This is unit specific
-    GexMsg resp0 = GEX_Query(unit, bulk->req_cmd, bulk->req_data, bulk->req_len);
+//    GexMsg resp0 = GEX_Query(unit, bulk->req_cmd, bulk->req_data, bulk->req_len);
+    GexMsg resp0 = GEX_QueryEx(unit,
+                               bulk->req_cmd, bulk->req_data, bulk->req_len,
+                               0, false,
+                               unit->callsign == 0);
 
     if (resp0.type == MSG_ERROR) {
         fprintf(stderr, "Bulk write rejected! %.*s\n", resp0.len, (char*)resp0.payload);

@@ -42,7 +42,33 @@ const char *longtext = "A sharper perspective on this matter is particularly imp
         "the system of domination, as if people did not participate in their own\r\n"
         "submission.  To reduce domination to a simple relation of doer and done-to\r\n"
         "is to substitute moral outrage for analysis.\r\n"
-        "\t\t-- Jessica Benjamin, \"The Bonds of Love\"";
+        "\t\t-- Jessica Benjamin, \"The Bonds of Love\""
+        "A sharper perspective on this matter is particularly important to feminist\r\n"
+        "thought today, because a major tendency in feminism has constructed the\r\n"
+        "problem of domination as a drama of female vulnerability victimized by male\r\n"
+        "aggression.  Even the more sophisticated feminist thinkers frequently shy\r\n"
+        "away from the analysis of submission, for fear that in admitting woman's\r\n"
+        "participation in the relationship of domination, the onus of responsibility\r\n"
+        "will appear to shift from men to women, and the moral victory from women to\r\n"
+        "men.  More generally, this has been a weakness of radical politics: to\r\n"
+        "idealize the oppressed, as if their politics and culture were untouched by\r\n"
+        "the system of domination, as if people did not participate in their own\r\n"
+        "submission.  To reduce domination to a simple relation of doer and done-to\r\n"
+        "is to substitute moral outrage for analysis.\r\n"
+        "\t\t-- Jessica Benjamin, \"The Bonds of Love\""
+        "A sharper perspective on this matter is particularly important to feminist\r\n"
+        "thought today, because a major tendency in feminism has constructed the\r\n"
+        "problem of domination as a drama of female vulnerability victimized by male\r\n"
+        "aggression.  Even the more sophisticated feminist thinkers frequently shy\r\n"
+        "away from the analysis of submission, for fear that in admitting woman's\r\n"
+        "participation in the relationship of domination, the onus of responsibility\r\n"
+        "will appear to shift from men to women, and the moral victory from women to\r\n"
+        "men.  More generally, this has been a weakness of radical politics: to\r\n"
+        "idealize the oppressed, as if their politics and culture were untouched by\r\n"
+        "the system of domination, as if people did not participate in their own\r\n"
+        "submission.  To reduce domination to a simple relation of doer and done-to\r\n"
+        "is to substitute moral outrage for analysis.\r\n"
+        "\t\t-- Jessica Benjamin, \"The Bonds of Love\" \r\nEND OF TEXT";
 
 int main(void)
 {
@@ -72,6 +98,21 @@ int main(void)
     fprintf(stderr, "Cmd \"PING\" OK\n");
 #endif
 
+#if 1
+    // Read the communist manifesto via bulk transfer
+    uint8_t inifile[10000];
+    br = (GexBulk){
+            .buffer = inifile,
+            .capacity = 10000,
+            .req_cmd = MSG_INI_READ,
+            .req_data = NULL,
+            .req_len = 0,
+    };
+    uint32_t actuallyRead = GEX_BulkRead(GEX_SystemUnit(gex), &br);
+    fprintf(stderr, "Read %d bytes of INI:\n", actuallyRead);
+    fprintf(stderr, "%.*s", actuallyRead, inifile);
+#endif
+
 #if 0
     // Test a echo command that returns back what was sent to it as useful payload
     const char *s = "I am \r\nreturning this otherwise good typing paper to you because someone "
@@ -85,7 +126,7 @@ int main(void)
 #if 0
     // Read the communist manifesto via bulk transfer
     uint8_t buffr[10000];
-    br = {
+    br = (GexBulk){
         .buffer = buffr,
         .capacity = 10000,
         .req_cmd = 2,
@@ -97,7 +138,7 @@ int main(void)
     fprintf(stderr, "%.*s", actuallyRead, buffr);
 #endif
 
-#if 1
+#if 0
     // Read the communist manifesto via bulk transfer
     br = (GexBulk){
             .buffer = (uint8_t *) longtext,

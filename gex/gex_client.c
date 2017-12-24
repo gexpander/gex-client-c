@@ -19,6 +19,11 @@
 #include "gex_helpers.h"
 #include "utils/payload_parser.h"
 
+GexUnit *GEX_SystemUnit(GexClient *gex)
+{
+    return &gex->system_unit;
+}
+
 /** Callback for ping */
 static TF_Result connectivity_check_lst(TinyFrame *tf, TF_Msg *msg)
 {
@@ -40,21 +45,11 @@ static TF_Result unit_report_lst(TinyFrame *tf, TF_Msg *msg)
 
     struct gex_unit *lu = gex_find_unit_by_callsign(gex, callsign);
 
-    // NULL object pattern - we use a fake unit if no unit matched.
-    GexUnit fbu = {
-        .callsign = 0,
-        .report_handler = NULL,
-        .type = "NONE",
-        .name = "FALLBACK",
-        .gex = gex, // gex must be available here - this is why we can't have this static or const.
-        .next = NULL,
-    };
-
     GexMsg gexMsg = {
         .payload = (uint8_t *) (msg->data + 2),
         .len = (uint32_t) (msg->len - 2),
         .type = rpt_type,
-        .unit = (lu == NULL) ? &fbu : lu,
+        .unit = (lu == NULL) ? &gex->system_unit : lu,
     };
 
     if (lu && lu->report_handler) {
@@ -138,6 +133,16 @@ GexClient *GEX_Init(const char *device, uint32_t timeout_ms)
     // --- Init the struct ---
     GexClient *gex = calloc(1, sizeof(GexClient));
     assert(gex != NULL);
+
+    // Init the dummy system unit
+    gex->system_unit = (GexUnit){
+            .name = "SYSTEM",
+            .type = "SYSTEM",
+            .callsign = 0,
+            .gex = gex,
+            .next = NULL,
+            .report_handler = NULL
+    };
 
     // --- Open the device ---
     gex->acm_device = device;

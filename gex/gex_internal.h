@@ -30,7 +30,9 @@ struct gex_client {
 
     GexEventListener fallback_report_handler;
 
-    struct gex_unit *ulu_head; //!< Units look-up linked list
+    GexUnit *ulu_head; //!< Units look-up linked list
+
+    GexUnit system_unit; //!< System unit, used as dummy for raw queries
 };
 
 #endif //GEX_CLIENT_GEX_CLIENT_INTERNAL_H
