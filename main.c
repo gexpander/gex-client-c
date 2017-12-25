@@ -80,12 +80,13 @@ int main(void)
 	gex = GEX_Init("/dev/ttyACM0", 200);
 	if (!gex) exit(1);
 
+    // Fallback TF listener for reporting unhandled frames
     TF_AddGenericListener(GEX_GetTF(gex), hdl_default);
 
     //GexUnit *led = GEX_Unit(gex, "LED");
     //GEX_Send(led, LED_CMD_TOGGLE, NULL, 0);
 
-    GexUnit *test = GEX_Unit(gex, "TEST");
+    GexUnit *test = GEX_GetUnit(gex, "TEST");
     assert(test != NULL);
 
     // the "PING" command
@@ -98,24 +99,38 @@ int main(void)
     fprintf(stderr, "Cmd \"PING\" OK\n");
 #endif
 
-#if 1
+#if 0
     // Load settings to a buffer as INI
     uint8_t inifile[10000];
     br = (GexBulk){
-            .buffer = inifile,
-            .capacity = 10000,
-            .req_cmd = MSG_INI_READ,
-            .req_data = NULL,
-            .req_len = 0,
+        .buffer = inifile,
+        .capacity = 10000,
+        .req_cmd = MSG_INI_READ,
+        .req_data = NULL,
+        .req_len = 0,
     };
-    uint32_t actuallyRead = GEX_BulkRead(GEX_SystemUnit(gex), &br);
+    uint32_t actuallyRead = GEX_BulkRead(GEX_SysUnit(gex), &br);
     fprintf(stderr, "Read %d bytes of INI:\n", actuallyRead);
     fprintf(stderr, "%.*s", actuallyRead, inifile);
 
     // And send it back...
     br.len = actuallyRead;
     br.req_cmd = MSG_INI_WRITE;
-    GEX_BulkWrite(GEX_SystemUnit(gex), &br);
+    GEX_BulkWrite(GEX_SysUnit(gex), &br);
+#endif
+
+#if 1
+    // Load settings to a buffer as INI
+    char inifile[10000];
+    uint32_t len = GEX_SettingsIniRead(gex, inifile, 10000);
+    assert(len > 0);
+
+    fprintf(stderr, "Read %d bytes of INI:\n", len);
+    fprintf(stderr, "%.*s", len, inifile);
+
+    // And send it back...
+    bool suc = GEX_SettingsIniWrite(gex, inifile);
+    assert(suc);
 #endif
 
 #if 0

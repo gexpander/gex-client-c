@@ -33,9 +33,21 @@ void GEX_SetUnitReportListener(GexUnit *unit, GexEventListener lst);
  */
 void GEX_SetDefaultReportListener(GexClient *gex, GexEventListener lst);
 
+/**
+ * Get the bare TinyFrame instance
+ * @param gex - GEX client
+ * @return TinyFrame instance pointer
+ */
 TinyFrame *GEX_GetTF(GexClient *gex);
 
-GexUnit *GEX_SystemUnit(GexClient *gex);
+/**
+ * Get the dummy SYSTEM unit. Can be used for bulk read/write that's
+ * not targeted at a particular unit.
+ *
+ * @param gex - client
+ * @return the SYSTEM unit
+ */
+GexUnit *GEX_SysUnit(GexClient *gex);
 
 /**
  * Get a unit, or NULL
@@ -43,7 +55,7 @@ GexUnit *GEX_SystemUnit(GexClient *gex);
  * @param gex - gex
  * @param name - unit name
  */
-GexUnit *GEX_Unit(GexClient *gex, const char *name);
+GexUnit *GEX_GetUnit(GexClient *gex, const char *name);
 
 /**
  * Initialize the GEX client

@@ -19,7 +19,8 @@
 #include "gex_helpers.h"
 #include "utils/payload_parser.h"
 
-GexUnit *GEX_SystemUnit(GexClient *gex)
+/** Get the system unit */
+GexUnit *GEX_SysUnit(GexClient *gex)
 {
     return &gex->system_unit;
 }
@@ -119,7 +120,7 @@ TinyFrame *GEX_GetTF(GexClient *gex)
 }
 
 /** Find a unit */
-GexUnit *GEX_Unit(GexClient *gex, const char *name)
+GexUnit *GEX_GetUnit(GexClient *gex, const char *name)
 {
     GexUnit *u = gex_find_unit_by_name(gex, name);
     if (u == NULL) {

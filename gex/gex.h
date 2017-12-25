@@ -7,6 +7,7 @@
 
 #include "gex_defines.h"
 #include "gex_client.h"
+#include "gex_settings.h"
 #include "gex_unit.h"
 #include "gex_message_types.h"
 
