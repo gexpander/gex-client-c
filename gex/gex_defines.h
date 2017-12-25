@@ -45,6 +45,7 @@ struct gex_unit {
     char *type;               //!< Unit type (loaded, malloc'd)
     uint8_t callsign;         //!< Unit callsign
     GexEventListener report_handler; //!< Report handling function
+    void *priv; //!< Place for unit driver private struct (for use with support library packages)
     struct gex_unit *next; //!< Pointer to the next entry in this linked list, or NULL if none
 };
 
