@@ -31,3 +31,8 @@ bool GEX_SettingsIniWrite(GexClient *gex, const char *buffer)
 
     return GEX_BulkWrite(GEX_SysUnit(gex), &bw);
 }
+
+bool GEX_SettingsPersist(GexClient *gex)
+{
+    return TF_SendSimple(gex->tf, MSG_PERSIST_SETTINGS, NULL, 0);
+}

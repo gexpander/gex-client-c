@@ -22,12 +22,12 @@
  */
 uint32_t GEX_BulkRead(GexUnit *unit, GexBulk *bulk)
 {
-//    fprintf(stderr, "Ask to read:\n");
     // We ask for the transfer. This is unit specific and can contain information that determines the transferred data
-
-    // if unit callsign is 0, it's the system unit and we'll use raw query without the unit prefix
-    GexMsg resp0 = GEX_QueryEx(unit, bulk->req_cmd, bulk->req_data, bulk->req_len, 0, false, unit->callsign == 0);
-    //        GEX_Query(unit, bulk->req_cmd, bulk->req_data, bulk->req_len);
+    // if unit callsign is 0, it's the system unit and we use raw query without the unit prefix
+    GexMsg resp0 = GEX_QueryEx(unit, bulk->req_cmd,
+                               bulk->req_data, bulk->req_len,
+                               0, false, // frame_id, response
+                               unit->callsign == 0);
 
     if (resp0.type == MSG_ERROR) {
         fprintf(stderr, "Bulk read rejected! %.*s\n", resp0.len, (char*)resp0.payload);
@@ -39,23 +39,19 @@ uint32_t GEX_BulkRead(GexUnit *unit, GexBulk *bulk)
         return 0;
     }
 
-//    fprintf(stderr, "BR, got offer!\n");
-
     // Check how much data is available
     PayloadParser pp = pp_start(resp0.payload, resp0.len, NULL);
     uint32_t total = pp_u32(&pp);
     assert(pp.ok);
 
-    total = MIN(total, bulk->capacity); // clamp...
-//    fprintf(stderr, "Total is %d\n", total);
+    total = MIN(total, bulk->capacity);
 
     uint32_t at = 0;
-    while (at < total+1) { // +1 makes sure we read one past end and trigger the END OF DATA msg
+    while (at < total) { // +1 makes sure we read one past end and trigger the END OF DATA msg
         uint8_t buf[10];
         PayloadBuilder pb = pb_start(buf, 10, NULL);
         pb_u32(&pb, TF_MAX_PAYLOAD_RX); // This selects the chunk size.
 
-//        fprintf(stderr, "Poll read:\n");
         GexMsg resp = GEX_QueryEx(unit, MSG_BULK_READ_POLL, buf,
                                   (uint32_t) pb_length(&pb), resp0.session, true, true);
 
@@ -65,7 +61,6 @@ uint32_t GEX_BulkRead(GexUnit *unit, GexBulk *bulk)
         }
 
         if (resp.type == MSG_BULK_DATA || resp.type == MSG_BULK_END) {
-//            hexDump("Rx chunk", resp.payload, resp.len);
             memcpy(bulk->buffer+at, resp.payload, resp.len);
             at += resp.len;
 
@@ -92,10 +87,7 @@ uint32_t GEX_BulkRead(GexUnit *unit, GexBulk *bulk)
  */
 bool GEX_BulkWrite(GexUnit *unit, GexBulk *bulk)
 {
-//    fprintf(stderr, "Asking for bulk write...\n");
-
     // We ask for the transfer. This is unit specific
-//    GexMsg resp0 = GEX_Query(unit, bulk->req_cmd, bulk->req_data, bulk->req_len);
     GexMsg resp0 = GEX_QueryEx(unit,
                                bulk->req_cmd, bulk->req_data, bulk->req_len,
                                0, false,
@@ -116,21 +108,26 @@ bool GEX_BulkWrite(GexUnit *unit, GexBulk *bulk)
     uint32_t max_chunk = pp_u32(&pp);
     assert(pp.ok);
 
-//    fprintf(stderr, "Write allowed, size %d, chunk %d\n", (int)max_size, (int)max_chunk);
-
     if (max_size < bulk->len) {
         fprintf(stderr, "Write not possible, not enough space.\n");
+
         // Inform GEX we're not going to do it
-        GEX_SendEx(unit, MSG_BULK_ABORT, NULL, 0, resp0.session, true, true);
+        GEX_SendEx(unit, MSG_BULK_ABORT,
+                   NULL, 0,
+                   resp0.session, true,
+                   true);
+
         return false;
     }
 
     uint32_t at = 0;
     while (at < bulk->len) {
         uint32_t chunk = MIN(max_chunk, bulk->len - at);
-//        fprintf(stderr, "Query at %d, len %d\n", (int)at, (int)chunk);
-        GexMsg resp = GEX_QueryEx(unit, MSG_BULK_DATA, bulk->buffer + at, chunk,
-                                  resp0.session, true, true);
+
+        GexMsg resp = GEX_QueryEx(unit, ((at+chunk) >= bulk->len) ? MSG_BULK_END : MSG_BULK_DATA,
+                                  bulk->buffer + at, chunk,
+                                  resp0.session, true,
+                                  true);
         at += chunk;
 
         if (resp.type == MSG_ERROR) {
@@ -143,9 +140,6 @@ bool GEX_BulkWrite(GexUnit *unit, GexBulk *bulk)
             return false;
         }
     }
-
-    // Conclude the transfer
-    GEX_SendEx(unit, MSG_BULK_END, NULL, 0, resp0.session, true, true);
 
     return true;
 }

@@ -34,6 +34,7 @@ enum TF_Types_ {
     MSG_LIST_UNITS = 0x20, //!< Get all unit call-signs and names
     MSG_INI_READ = 0x21,   //!< Read the ini file via bulk
     MSG_INI_WRITE = 0x22,  //!< Write the ini file via bulk
+    MSG_PERSIST_SETTINGS = 0x23,  //!< Write current settings to Flash
 };
 
 #endif //GEX_CLIENT_GEX_MESSAGE_TYPES_H

@@ -14,8 +14,33 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/**
+ * Read the settings INI file via TinyFrame
+ *
+ * @param gex - client
+ * @param buffer - target buffer
+ * @param maxlen - buffer size
+ * @return number of bytes read, 0 on error
+ */
 uint32_t GEX_SettingsIniRead(GexClient *gex, char *buffer, uint32_t maxlen);
 
+/**
+ * Write settings INI file via TinyFrame
+ *
+ * @param gex - client
+ * @param buffer - buffer with the settings file
+ * @return success
+ */
 bool GEX_SettingsIniWrite(GexClient *gex, const char *buffer);
+
+/**
+ * Persiste the settings loaded via GEX_SettingsIniWrite() to Flash
+ * This can be used with GEX instances built without the MSC support
+ * as a substitute for the LOCK jumper.
+ *
+ * @param gex - client
+ * @return send success
+ */
+bool GEX_SettingsPersist(GexClient *gex);
 
 #endif //GEX_CLIENT_GEX_SETTINGS_H
