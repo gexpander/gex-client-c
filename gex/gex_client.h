@@ -20,11 +20,18 @@
  * a spontaneous report is received. If no known unit matched the report,
  * a dummy unit is provided to avoid NULL access.
  *
- * @param gex - client
- * @param unit - the handled unit, NULL to bind a fallback listener (fallback may receive events from all unhandled units)
+ * @param unit - the handled unit
  * @param lst - the listener
  */
-void GEX_OnReport(GexClient *gex, GexUnit *unit, GexEventListener lst);
+void GEX_SetUnitReportListener(GexUnit *unit, GexEventListener lst);
+
+/**
+ * Bind a defualt report listener (used if a report is not handled by any unit report listener).
+ *
+ * @param gex - client
+ * @param lst - the listener
+ */
+void GEX_SetDefaultReportListener(GexClient *gex, GexEventListener lst);
 
 TinyFrame *GEX_GetTF(GexClient *gex);
 

@@ -43,7 +43,7 @@ static TF_Result unit_report_lst(TinyFrame *tf, TF_Msg *msg)
     uint8_t callsign = msg->data[0];
     uint8_t rpt_type = msg->data[1];
 
-    struct gex_unit *lu = gex_find_unit_by_callsign(gex, callsign);
+    GexUnit *lu = gex_find_unit_by_callsign(gex, callsign);
 
     GexMsg gexMsg = {
         .payload = (uint8_t *) (msg->data + 2),
@@ -69,19 +69,20 @@ static TF_Result list_units_lst(TinyFrame *tf, TF_Msg *msg)
 
     gex_destroy_unit_lookup(gex);
 
+    // Parse the payload
     PayloadParser pp = pp_start((uint8_t*)msg->data, msg->len, NULL);
     uint8_t count = pp_u8(&pp);
     char buf[20];
     char buf2[20];
-    struct gex_unit *tail = NULL;
+    GexUnit *tail = NULL;
     for(int i = 0; i < count; i++) {
         uint8_t callsign = pp_u8(&pp);
         pp_string(&pp, buf, 20);
         pp_string(&pp, buf2, 20);
         fprintf(stderr, "- Found unit \"%s\" (type %s) @ callsign %d\n", buf, buf2, callsign);
 
-        // append
-        struct gex_unit *lu = malloc(sizeof(struct gex_unit));
+        // append a unit instance
+        GexUnit *lu = malloc(sizeof(GexUnit));
         lu->next = NULL;
         lu->type = strdup(buf2);
         lu->name = strdup(buf);
@@ -100,16 +101,18 @@ static TF_Result list_units_lst(TinyFrame *tf, TF_Msg *msg)
 }
 
 /** Bind report listener */
-void GEX_OnReport(GexClient *gex, GexUnit *unit, GexEventListener lst)
+void GEX_SetUnitReportListener(GexUnit *unit, GexEventListener lst)
 {
-    if (!unit) {
-        gex->fallback_report_handler = lst;
-    }
-    else {
-        unit->report_handler = lst;
-    }
+    unit->report_handler = lst;
 }
 
+/** Bind report listener */
+void GEX_SetDefaultReportListener(GexClient *gex, GexEventListener lst)
+{
+    gex->fallback_report_handler = lst;
+}
+
+/** Get raw TinyFrame instance */
 TinyFrame *GEX_GetTF(GexClient *gex)
 {
     return gex->tf;
@@ -159,7 +162,9 @@ GexClient *GEX_Init(const char *device, uint32_t timeout_ms)
 
     // --- Test connectivity ---
     fprintf(stderr, "Testing connection...\n");
-    TF_QuerySimple(gex->tf, MSG_PING, /*pld*/ NULL, 0, /*cb*/ connectivity_check_lst, 0);
+    TF_QuerySimple(gex->tf, MSG_PING,
+                   NULL, 0,
+                   connectivity_check_lst, 0);
     GEX_Poll(gex);
 
     if (!gex->connected) {
@@ -170,7 +175,9 @@ GexClient *GEX_Init(const char *device, uint32_t timeout_ms)
 
     // --- populate callsign look-up table ---
     fprintf(stderr, "Loading available units info...\n");
-    TF_QuerySimple(gex->tf, MSG_LIST_UNITS, /*pld*/ NULL, 0, /*cb*/ list_units_lst, 0);
+    TF_QuerySimple(gex->tf, MSG_LIST_UNITS,
+                   NULL, 0,
+                   list_units_lst, 0);
     GEX_Poll(gex);
 
     // Bind the catch-all event handler. Will be re-distributed to individual unit listeners if needed.
@@ -192,31 +199,40 @@ void GEX_Poll(GexClient *gex)
 
     int cycle = 0;
     do {
+        // The first read is blocking up to a timeout and waits for data
         if (first) serial_shouldwait(gex->acm_fd, gex->ser_timeout);
         ssize_t len = read(gex->acm_fd, pollbuffer, TF_MAX_PAYLOAD_RX);
         if (first) {
+            // Following reads are non-blocking and just grab data from the system buffer
             serial_noblock(gex->acm_fd);
             first = false;
         }
 
+        // abort on error
         if (len < 0) {
             fprintf(stderr, "ERROR %d in GEX Poll: %s\n", errno, strerror(errno));
             break;
         }
         else {
+            // nothing received?
             if (len == 0) {
+                // keep trying to read we have a reason to expect more data
                 if (gex->tf->state != 0) {
                     if (cycle < MAX_RETRIES) {
+                        // start a new cycle, setting 'first' to use a blocking read
                         cycle++;
                         first=true;
                     } else {
+                        // tries exhausted
                         break;
                     }
                 } else {
+                    // nothing more received and TF is in the base state, we're done.
                     break;
                 }
             }
             else {
+                // process the received data
                 TF_Accept(gex->tf, pollbuffer, (size_t) len);
             }
         }
