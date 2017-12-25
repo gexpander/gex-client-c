@@ -5,7 +5,6 @@
 #include <errno.h>
 
 #include "TinyFrame.h"
-#include "utils/hexdump.h"
 
 #include "gex.h"
 #include "gex_internal.h"

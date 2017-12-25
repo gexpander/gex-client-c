@@ -9,7 +9,6 @@
 
 #define GEX_H // to allow including other headers
 #include "gex_defines.h"
-#include "gex_helpers.h"
 #include "gex_message_types.h"
 #include "gex_unit.h"
 #include "gex_internal.h"
@@ -32,8 +31,6 @@ static void GEX_LL_Query(GexUnit *unit, uint8_t cmd,
 {
     assert(unit != NULL);
     assert(unit->gex != NULL);
-
-//    fprintf(stderr, "raw pld? %d\n", raw_pld);
 
     GexClient *gex = unit->gex;
 
@@ -99,8 +96,6 @@ static TF_Result sync_query_lst(TinyFrame *tf, TF_Msg *msg)
 {
     GexClient *gex = tf->userdata;
     assert(gex != NULL);
-
-//    fprintf(stderr, "sync query lst called <-\n");
 
     // clone the message
     gex->squery_msg.len = msg->len;

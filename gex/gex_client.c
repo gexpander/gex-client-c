@@ -16,8 +16,22 @@
 #include "serial.h"
 #include "gex_internal.h"
 #include "gex_message_types.h"
-#include "gex_helpers.h"
 #include "utils/payload_parser.h"
+
+
+/** Delete recursively all GEX callsign look-up table entries */
+static void destroy_unit_lookup(GexClient *gex);
+
+/** Get lookup entry for unit name */
+static GexUnit *find_unit_by_callsign(GexClient *gex, uint8_t callsign);
+
+/** Get lookup entry for unit name */
+static GexUnit *find_unit_by_name(GexClient *gex, const char *name);
+
+/** Get callsign for unit name */
+static uint8_t find_callsign_by_name(GexClient *gex, const char *name);
+
+// --------------------------------
 
 /** Get the system unit */
 GexUnit *GEX_SysUnit(GexClient *gex)
@@ -44,7 +58,7 @@ static TF_Result unit_report_lst(TinyFrame *tf, TF_Msg *msg)
     uint8_t callsign = msg->data[0];
     uint8_t rpt_type = msg->data[1];
 
-    GexUnit *lu = gex_find_unit_by_callsign(gex, callsign);
+    GexUnit *lu = find_unit_by_callsign(gex, callsign);
 
     GexMsg gexMsg = {
         .payload = (uint8_t *) (msg->data + 2),
@@ -68,7 +82,7 @@ static TF_Result list_units_lst(TinyFrame *tf, TF_Msg *msg)
 {
     GexClient *gex = tf->userdata;
 
-    gex_destroy_unit_lookup(gex);
+    destroy_unit_lookup(gex);
 
     // Parse the payload
     PayloadParser pp = pp_start((uint8_t*)msg->data, msg->len, NULL);
@@ -122,7 +136,7 @@ TinyFrame *GEX_GetTF(GexClient *gex)
 /** Find a unit */
 GexUnit *GEX_GetUnit(GexClient *gex, const char *name)
 {
-    GexUnit *u = gex_find_unit_by_name(gex, name);
+    GexUnit *u = find_unit_by_name(gex, name);
     if (u == NULL) {
         fprintf(stderr, "!! Unit %s not found!\n", name);
     }
@@ -245,7 +259,66 @@ void GEX_DeInit(GexClient *gex)
 {
     if (gex == NULL) return;
     fsync(gex->acm_fd);
-    gex_destroy_unit_lookup(gex);
+    destroy_unit_lookup(gex);
     TF_DeInit(gex->tf);
     free(gex);
+}
+
+// --------------------------------------------------------
+
+
+/** Delete recursively all GEX callsign look-up table entries */
+static void destroy_unit_lookup(GexClient *gex)
+{
+    assert(gex != NULL);
+
+    GexUnit *next = gex->ulu_head;
+    while (next != NULL) {
+        GexUnit *cur = next;
+        next = next->next;
+        free(cur->name);
+        free(cur->type);
+        free(cur);
+    }
+    gex->ulu_head = NULL;
+}
+
+/** Get lookup entry for unit name */
+static GexUnit *find_unit_by_callsign(GexClient *gex, uint8_t callsign)
+{
+    assert(gex != NULL);
+
+    GexUnit *next = gex->ulu_head;
+    while (next != NULL) {
+        if (next->callsign == callsign) {
+            return next;
+        }
+        next = next->next;
+    }
+    return NULL;
+}
+
+/** Get lookup entry for unit name */
+static GexUnit *find_unit_by_name(GexClient *gex, const char *name)
+{
+    assert(gex != NULL);
+    assert(name != NULL);
+
+    GexUnit *next = gex->ulu_head;
+    while (next != NULL) {
+        if (strcmp(next->name, name) == 0) {
+            return next;
+        }
+        next = next->next;
+    }
+    return NULL;
+}
+
+/** Get callsign for unit name */
+static uint8_t find_callsign_by_name(GexClient *gex, const char *name)
+{
+    assert(gex != NULL);
+
+    GexUnit *lu = find_unit_by_name(gex, name);
+    return (uint8_t) ((lu == NULL) ? 0 : lu->callsign);
 }
