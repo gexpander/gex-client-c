@@ -22,7 +22,7 @@
  * @param maxlen - buffer size
  * @return number of bytes read, 0 on error
  */
-uint32_t GEX_SettingsIniRead(GexClient *gex, char *buffer, uint32_t maxlen);
+uint32_t GEX_IniRead(GexClient *gex, char *buffer, uint32_t maxlen);
 
 /**
  * Write settings INI file via TinyFrame
@@ -31,7 +31,7 @@ uint32_t GEX_SettingsIniRead(GexClient *gex, char *buffer, uint32_t maxlen);
  * @param buffer - buffer with the settings file
  * @return success
  */
-bool GEX_SettingsIniWrite(GexClient *gex, const char *buffer);
+bool GEX_IniWrite(GexClient *gex, const char *buffer);
 
 /**
  * Persiste the settings loaded via GEX_SettingsIniWrite() to Flash
@@ -41,6 +41,6 @@ bool GEX_SettingsIniWrite(GexClient *gex, const char *buffer);
  * @param gex - client
  * @return send success
  */
-bool GEX_SettingsPersist(GexClient *gex);
+bool GEX_IniPersist(GexClient *gex);
 
 #endif //GEX_CLIENT_GEX_SETTINGS_H

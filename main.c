@@ -99,7 +99,7 @@ int main(void)
     fprintf(stderr, "Cmd \"PING\" OK\n");
 #endif
 
-#if 0
+#if 1
     // Load settings to a buffer as INI
     uint8_t inifile[10000];
     br = (GexBulk){
@@ -122,18 +122,18 @@ int main(void)
 #if 1
     // Load settings to a buffer as INI
     char inifile[10000];
-    uint32_t len = GEX_SettingsIniRead(gex, inifile, 10000);
+    uint32_t len = GEX_IniRead(gex, inifile, 10000);
     assert(len > 0);
 
     fprintf(stderr, "Read %d bytes of INI:\n", len);
     fprintf(stderr, "%.*s", len, inifile);
 
     // And send it back...
-    bool suc = GEX_SettingsIniWrite(gex, inifile);
+    bool suc = GEX_IniWrite(gex, inifile);
     assert(suc);
 #endif
 
-#if 0
+#if 1
     // Test a echo command that returns back what was sent to it as useful payload
     const char *s = "I am \r\nreturning this otherwise good typing paper to you because someone "
             "has printed gibberish all over it and put your name at the top. Read the communist manifesto via bulk transfer. Read the communist manifesto via bulk transfer. Technology is a constand battle between manufacturers producing bigger and "
@@ -143,7 +143,7 @@ int main(void)
     assert(0==strncmp((char*)msg.payload, s, strlen(s)));
 #endif
 
-#if 0
+#if 1
     // Read the communist manifesto via bulk transfer
     uint8_t buffr[10000];
     br = (GexBulk){
@@ -158,7 +158,7 @@ int main(void)
     fprintf(stderr, "%.*s", actuallyRead, buffr);
 #endif
 
-#if 0
+#if 1
     // Read the communist manifesto via bulk transfer
     br = (GexBulk){
             .buffer = (uint8_t *) longtext,

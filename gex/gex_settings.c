@@ -8,7 +8,7 @@
 #include "gex_internal.h"
 #include "gex_message_types.h"
 
-uint32_t GEX_SettingsIniRead(GexClient *gex, char *buffer, uint32_t maxlen)
+uint32_t GEX_IniRead(GexClient *gex, char *buffer, uint32_t maxlen)
 {
     GexBulk br = (GexBulk){
             .buffer = (uint8_t *) buffer,
@@ -21,7 +21,7 @@ uint32_t GEX_SettingsIniRead(GexClient *gex, char *buffer, uint32_t maxlen)
     return actuallyRead;
 }
 
-bool GEX_SettingsIniWrite(GexClient *gex, const char *buffer)
+bool GEX_IniWrite(GexClient *gex, const char *buffer)
 {
     GexBulk bw = (GexBulk){
             .buffer = (uint8_t *) buffer,
@@ -32,7 +32,7 @@ bool GEX_SettingsIniWrite(GexClient *gex, const char *buffer)
     return GEX_BulkWrite(GEX_SysUnit(gex), &bw);
 }
 
-bool GEX_SettingsPersist(GexClient *gex)
+bool GEX_IniPersist(GexClient *gex)
 {
     return TF_SendSimple(gex->tf, MSG_PERSIST_SETTINGS, NULL, 0);
 }
