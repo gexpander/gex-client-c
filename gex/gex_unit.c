@@ -144,7 +144,7 @@ GexMsg GEX_QueryEx(GexUnit *unit, uint8_t cmd,
                  session, is_reply, sync_query_lst,
                  NULL /*userdata2*/, raw_pld);
 
-    GEX_Poll(gex);
+    GEX_Poll(gex, &gex->squery_ok);
 
     if (!gex->squery_ok) {
         fprintf(stderr, "No response to query of unit %s!\n", unit->name);

@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <utils/hexdump.h>
+
 #include "TinyFrame.h"
 
 #define GEX_H // to allow including other headers
@@ -17,6 +17,7 @@
 #include "gex_internal.h"
 #include "gex_message_types.h"
 #include "utils/payload_parser.h"
+#include "utils/hexdump.h"
 
 
 /** Delete recursively all GEX callsign look-up table entries */
@@ -112,6 +113,8 @@ static TF_Result list_units_lst(TinyFrame *tf, TF_Msg *msg)
         tail = lu;
     }
 
+    gex->units_loaded = true;
+
     return TF_CLOSE;
 }
 
@@ -195,7 +198,7 @@ GexClient *GEX_Init(const char *device, uint32_t timeout_ms)
     TF_QuerySimple(gex->tf, MSG_PING,
                    NULL, 0,
                    connectivity_check_lst, 0);
-    GEX_Poll(gex);
+    GEX_Poll(gex, &gex->connected);
 
     if (!gex->connected) {
         fprintf(stderr, "GEX doesn't respond to ping!\n");
@@ -208,7 +211,7 @@ GexClient *GEX_Init(const char *device, uint32_t timeout_ms)
     TF_QuerySimple(gex->tf, MSG_LIST_UNITS,
                    NULL, 0,
                    list_units_lst, 0);
-    GEX_Poll(gex);
+    GEX_Poll(gex, &gex->units_loaded);
 
     // Bind the catch-all event handler. Will be re-distributed to individual unit listeners if needed.
     TF_AddTypeListener(gex->tf, MSG_UNIT_REPORT, unit_report_lst);
@@ -220,7 +223,7 @@ GexClient *GEX_Init(const char *device, uint32_t timeout_ms)
 }
 
 /** Try to read from the serial port and process any received bytes with TF */
-void GEX_Poll(GexClient *gex)
+void GEX_Poll(GexClient *gex, const volatile bool *done_flag)
 {
     static uint8_t pollbuffer[TF_MAX_PAYLOAD_RX];
 
@@ -228,7 +231,7 @@ void GEX_Poll(GexClient *gex)
 
     bool first = true;
 
-#define MAX_RETRIES 10
+#define MAX_RETRIES 15
 
     int cycle = 0;
     do {
@@ -261,7 +264,17 @@ void GEX_Poll(GexClient *gex)
                     }
                 } else {
                     // nothing more received and TF is in the base state, we're done.
-                    break;
+                    if (done_flag != NULL) {
+                        if (*done_flag == true) {
+                            break;
+                        } else {
+                            cycle++;
+                            first=true;
+                            if (cycle >= MAX_RETRIES) break;
+                        }
+                    } else {
+                        break;
+                    }
                 }
             }
             else {

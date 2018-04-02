@@ -70,8 +70,9 @@ GexClient *GEX_Init(const char *device, uint32_t timeout_ms);
 /**
  * Poll for new messages
  * @param gex - client
+ * @param done_flag - if given (not NULL), checks flag for true before quitting. Flag should be set in the callback.
  */
-void GEX_Poll(GexClient *gex);
+void GEX_Poll(GexClient *gex, const volatile bool *done_flag);
 
 /**
  * Safely release all resources used up by GEX_Init()

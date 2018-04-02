@@ -343,8 +343,7 @@ static void _TF_FN TF_HandleReceivedMessage(TinyFrame *tf)
     TF_Result res;
 
     // Prepare message object
-    TF_Msg msg;
-    TF_ClearMsg(&msg);
+    TF_Msg msg = {};
     msg.frame_id = tf->id;
     msg.is_response = false;
     msg.type = tf->type;
@@ -801,8 +800,7 @@ bool _TF_FN TF_Send(TinyFrame *tf, TF_Msg *msg)
 /** send without listener and struct */
 bool _TF_FN TF_SendSimple(TinyFrame *tf, TF_TYPE type, const uint8_t *data, TF_LEN len)
 {
-    TF_Msg msg;
-    TF_ClearMsg(&msg);
+    TF_Msg msg = {};
     msg.type = type;
     msg.data = data;
     msg.len = len;
@@ -812,8 +810,7 @@ bool _TF_FN TF_SendSimple(TinyFrame *tf, TF_TYPE type, const uint8_t *data, TF_L
 /** send with a listener waiting for a reply, without the struct */
 bool _TF_FN TF_QuerySimple(TinyFrame *tf, TF_TYPE type, const uint8_t *data, TF_LEN len, TF_Listener listener, TF_TICKS timeout)
 {
-    TF_Msg msg;
-    TF_ClearMsg(&msg);
+    TF_Msg msg = {};
     msg.type = type;
     msg.data = data;
     msg.len = len;
