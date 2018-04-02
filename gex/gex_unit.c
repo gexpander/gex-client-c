@@ -17,13 +17,14 @@
  * Low level query
  *
  * @param unit - GEX unit to address. The unit is available in userdata1 of the response message, if any
- * @param cmd - command byte, or TYPE if raw query is used
+ * @param cmd_or_type - command byte, or TYPE if raw query is used
  * @param payload - payload buffer
  * @param len - payload length
  * @param lst - TF listener to handle the response, can be NULL
- * @param userdata2 userdata2 argument for the TF listener's message
+ * @param userdata2 userdata2 - argument for the TF listener's message
+ * @param raw_pld - true for raw payload (without callsign / cmd prefix)
  */
-static void GEX_LL_Query(GexUnit *unit, uint8_t cmd,
+static void GEX_LL_Query(GexUnit *unit, uint8_t cmd_or_type,
                          const uint8_t *payload, uint32_t len,
                          GexSession session, bool is_reply,
                          TF_Listener lst, void *userdata2,
@@ -51,7 +52,7 @@ static void GEX_LL_Query(GexUnit *unit, uint8_t cmd,
             // prefix the actual payload with the callsign and command bytes.
             // TODO provide TF API for sending the payload externally in smaller chunks? Will avoid the malloc here
             pld[0] = callsign;
-            pld[1] = cmd;
+            pld[1] = cmd_or_type;
             memcpy(pld + 2, payload, len);
         } else {
             memcpy(pld, payload, len);
@@ -59,7 +60,7 @@ static void GEX_LL_Query(GexUnit *unit, uint8_t cmd,
 
         TF_Msg msg;
         TF_ClearMsg(&msg);
-        msg.type = (raw_pld ? cmd : (uint8_t) MSG_UNIT_REQUEST);
+        msg.type = (raw_pld ? cmd_or_type : (uint8_t) MSG_UNIT_REQUEST);
         msg.data = pld;
         msg.len = (TF_LEN) (len + (raw_pld?0:2));
         msg.userdata = unit;
@@ -77,7 +78,12 @@ void GEX_Send(GexUnit *unit, uint8_t cmd, const uint8_t *payload, uint32_t len)
     assert(unit != NULL);
     assert(unit->gex != NULL);
 
-    GEX_LL_Query(unit, cmd, payload, len, 0, false, NULL, NULL, false);
+    GEX_LL_Query(unit, cmd, payload, len,
+                 0 /* session - unused here, starts a new session */,
+                 false /* is reply */,
+                 NULL, /* listener */
+                 NULL /* userdata2 */,
+                 false /* is raw payload */);
 }
 
 /** Send with no listener, don't wait for response */
@@ -88,7 +94,9 @@ void GEX_SendEx(GexUnit *unit, uint8_t cmd,
     assert(unit != NULL);
     assert(unit->gex != NULL);
 
-    GEX_LL_Query(unit, cmd, payload, len, session, is_reply, NULL, NULL, raw_pld);
+    GEX_LL_Query(unit, cmd, payload, len,
+                 session, is_reply, NULL /* listener */,
+                 NULL /*userdata*/, raw_pld);
 }
 
 /** listener for the synchronous query functionality */
@@ -132,7 +140,9 @@ GexMsg GEX_QueryEx(GexUnit *unit, uint8_t cmd,
     gex->squery_msg.len = (uint32_t) strlen("TIMEOUT");
     gex->squery_msg.payload = gex->squery_buffer;
 
-    GEX_LL_Query(unit, cmd, payload, len, session, is_reply, sync_query_lst, NULL, raw_pld);
+    GEX_LL_Query(unit, cmd, payload, len,
+                 session, is_reply, sync_query_lst,
+                 NULL /*userdata2*/, raw_pld);
 
     GEX_Poll(gex);
 
@@ -148,11 +158,12 @@ GexMsg GEX_Query(GexUnit *unit, uint8_t cmd, const uint8_t *payload, uint32_t le
 {
     assert(unit != NULL);
     assert(unit->gex != NULL);
-    return GEX_QueryEx(unit, cmd, payload, len, 0, false, false);
+    return GEX_QueryEx(unit, cmd, payload, len,
+                       0 /*session*/, false /*is_reply*/, false /*raw_pld*/);
 }
 
 
-/** listener for the synchronous query functionality */
+/** listener for asynchronous query */
 static TF_Result async_query_lst(TinyFrame *tf, TF_Msg *msg)
 {
     (void)tf;
@@ -181,5 +192,7 @@ void GEX_QueryAsync(GexUnit *unit, uint8_t cmd, const uint8_t *payload, uint32_t
     assert(unit->gex != NULL);
 
     // Async query does not poll, instead the user listener is attached to the message
-    GEX_LL_Query(unit, cmd, payload, len, 0, false, async_query_lst, lst, false);
+    GEX_LL_Query(unit, cmd, payload, len,
+                 0 /*session*/, false /*is_reply*/, async_query_lst,
+                 lst /*userdata2*/, false /*raw_pld*/);
 }

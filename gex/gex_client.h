@@ -54,8 +54,9 @@ GexUnit *GEX_SysUnit(GexClient *gex);
  *
  * @param gex - gex
  * @param name - unit name
+ * @param type - unit type, used to verify it's the right type
  */
-GexUnit *GEX_GetUnit(GexClient *gex, const char *name);
+GexUnit *GEX_GetUnit(GexClient *gex, const char *name, const char *type);
 
 /**
  * Initialize the GEX client

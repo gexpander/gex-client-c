@@ -134,13 +134,29 @@ TinyFrame *GEX_GetTF(GexClient *gex)
 }
 
 /** Find a unit */
-GexUnit *GEX_GetUnit(GexClient *gex, const char *name)
+GexUnit *GEX_GetUnit(GexClient *gex, const char *name, const char *type)
 {
     GexUnit *u = find_unit_by_name(gex, name);
     if (u == NULL) {
         fprintf(stderr, "!! Unit %s not found!\n", name);
+        return NULL;
     }
+
+    if (type != NULL && strcmp(u->type, type) != 0) {
+        fprintf(stderr, "!! Unit %s has type %s, expected %s!\n", name, u->type, type);
+        return NULL;
+    }
+
     return u;
+}
+
+/** Unhandled frame listener - for debug */
+static TF_Result hdl_default(TinyFrame *tf, TF_Msg*msg)
+{
+    (void)tf;
+    fprintf(stderr, "TF unhandled msg len %d, type %d, id %d", msg->len, msg->type, msg->frame_id);
+    hexDump("payload", msg->data, msg->len);
+    return TF_STAY;
 }
 
 /** Create a instance and connect */
@@ -176,7 +192,6 @@ GexClient *GEX_Init(const char *device, uint32_t timeout_ms)
     gex->tf->userdata = gex;
 
     // --- Test connectivity ---
-    fprintf(stderr, "Testing connection...\n");
     TF_QuerySimple(gex->tf, MSG_PING,
                    NULL, 0,
                    connectivity_check_lst, 0);
@@ -197,6 +212,9 @@ GexClient *GEX_Init(const char *device, uint32_t timeout_ms)
 
     // Bind the catch-all event handler. Will be re-distributed to individual unit listeners if needed.
     TF_AddTypeListener(gex->tf, MSG_UNIT_REPORT, unit_report_lst);
+
+    // Fallback TF listener for reporting unhandled frames
+    TF_AddGenericListener(GEX_GetTF(gex), hdl_default);
 
     return gex;
 }
@@ -231,7 +249,7 @@ void GEX_Poll(GexClient *gex)
         else {
             // nothing received?
             if (len == 0) {
-                // keep trying to read we have a reason to expect more data
+                // keep trying to read if we have a reason to expect more data
                 if (gex->tf->state != 0) {
                     if (cycle < MAX_RETRIES) {
                         // start a new cycle, setting 'first' to use a blocking read
