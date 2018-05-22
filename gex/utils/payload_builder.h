@@ -65,7 +65,7 @@ struct PayloadBuilder_ {
 #define pb_length(pb) ((pb)->current - (pb)->start)
 
 /** Reset the current pointer to start */
-#define pb_rewind(pb) do { pb->current = pb->start; } while (0)
+#define pb_rewind(pb) do { (pb)->current = (pb)->start; } while (0)
 
 
 /** Write from a buffer */

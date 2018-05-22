@@ -2,38 +2,56 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <assert.h>
+#include <utils/payload_builder.h>
 #include <unistd.h>
 
 #include "gex.h"
-#include "utils/hexdump.h"
-#include "utils/payload_builder.h"
+//#include "utils/hexdump.h"
+//#include "utils/payload_builder.h"
+//#include "utils/payload_parser.h"
+
+// some examples of usage, for more details see the header files
 
 static GexClient *gex;
-
-/** ^C handler to close it gracefully */
-static void sigintHandler(int sig)
-{
-    (void)sig;
-    if (gex != NULL) GEX_DeInit(gex);
-    exit(0);
-}
 
 /** Main function - test the library */
 int main(void)
 {
-    // Bind ^C handler for safe shutdown - need to release the port
-    signal(SIGINT, sigintHandler);
+    gex = GEX_Init("/dev/ttyACM0", 200);
+    if (!gex) exit(1);
 
-	gex = GEX_Init("/dev/ttyACM0", 200);
-	if (!gex) exit(1);
+    GexUnit *bus = GEX_GetUnit(gex, "i2c", "I2C");
+    assert(NULL != bus);
+
+    sleep(2);
 
 #if 0
-	// INI read example
-	char buffer[2000];
-	uint32_t len = GEX_IniRead(gex, buffer, 2000);
-	printf("%s", buffer);
+    GexUnit *adc = GEX_GetUnit(gex, "adc", "ADC");
 
-	GEX_IniWrite(gex, buffer);
+    GexMsg msg = GEX_Query(adc, 10, NULL, 0);
+    hexDump("Resp1", msg.payload, msg.len);
+
+    fprintf(stderr, "Channels: ");
+    for(uint32_t i = 0; i < msg.len; i++) fprintf(stderr, "%d, ", msg.payload[i]);
+
+    fprintf(stderr, "\n");
+
+    msg = GEX_Query(adc, 11, NULL, 0);
+    hexDump("Resp2", msg.payload, msg.len);
+
+    PayloadParser pp = pp_start(msg.payload, msg.len, NULL);
+    uint32_t fconf = pp_u32(&pp);
+    float freal = pp_float(&pp);
+    fprintf(stderr, "Freq configured %d Hz, real freq %f Hz", fconf, freal);
+#endif
+
+#if 0
+    // INI read example
+    char buffer[2000];
+    uint32_t len = GEX_IniRead(gex, buffer, 2000);
+    printf("%s", buffer);
+
+    GEX_IniWrite(gex, buffer);
     printf("Written.\r\n");
 #endif
 
@@ -61,6 +79,6 @@ int main(void)
     GEX_Send(bg, 0x00, (uint8_t *)&cmd_set, sizeof(cmd_set));
 #endif
 
-	GEX_DeInit(gex);
-	return 0;
+    GEX_DeInit(gex);
+    return 0;
 }

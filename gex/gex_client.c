@@ -290,6 +290,7 @@ void GEX_DeInit(GexClient *gex)
 {
     if (gex == NULL) return;
     fsync(gex->acm_fd);
+    close(gex->acm_fd);
     destroy_unit_lookup(gex);
     TF_DeInit(gex->tf);
     free(gex);
